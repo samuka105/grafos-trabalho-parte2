@@ -6,8 +6,8 @@
 
 class Node {
 private:
-    int id;                      // Identificador do nó
-    float weight;                // Peso do nó
+    int id; // Identificador do nó
+    float weight; // Peso do nó
     std::unordered_map<int, Edge> edges; // Mapa de arestas (target_id -> Edge)
 
 public:

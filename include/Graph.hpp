@@ -1,35 +1,51 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
-#include <unordered_map>
-#include <vector>
 #include "Node.hpp"
 #include "Edge.hpp"
+#include <string>
 
-class Graph {
-private:
-    std::unordered_map<int, Node> nodes;  // Mapa de nós (id -> Node)
+#include <queue>
+#include <limits>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <algorithm>
 
+#include <set>
+#include <stack>
+
+
+class Graph
+{
 public:
-    // Adiciona um nó ao grafo
-    void addNode(int id, float weight = 1.0f);
+    /*Assinatura dos métodos básicos para o funcionamento da classe*/
 
-    // Adiciona uma aresta ao grafo
-    void addEdge(int source, int target, float weight = 1.0f);
+    // contrutor e destrutor
+    
+    Graph();
+    ~Graph();
 
-    // Obtém um nó pelo ID
-    Node* getNode(int id);
+    // funcoes de arestas
+    void add_edge(size_t node_id_1, size_t node_id_2, float weight = 0);
+    
 
-    // Algoritmos para particionamento
-    int Greedy();
-    int GreedyRandomizedAdaptative();
-    int GreedyRandomizedAdaptativeReactive();
 
-    // Funções auxiliares para impressão dos resultados
-    void printGreedy();
-    void printGreedyRandomizedAdaptative();
-    void printGreedyRandomizedAdaptativeReactive();
+    // funcoes de no
+    void add_node(size_t node_id, float weight = 0);
+   
+    int conected(size_t node_id_1, size_t node_id_2);
 
+
+private:
+    size_t numberNodes;
+    size_t numberEdges;
+    bool   directed; 
+    bool   weightedEdges; 
+    bool   weightedNodes;
+    Node  *first;
+    Node  *last;
+    std::vector<Node> nodes; // Define the nodes member variable
 };
 
-#endif // GRAPH_HPP
+#endif  //GRAPH_HPP

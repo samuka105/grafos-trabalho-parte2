@@ -1,19 +1,48 @@
-#include "../include/Edge.hpp"
+#include "Edge.hpp"
 
-Edge::Edge(int target_id, float weight)
-{
-    this->target_id = target_id;
-    this->weight = weight;
+// Construtor padrão
+Edge::Edge() : _next_edge(nullptr), _weight(0), _target_id(0), _source_id(0) {}
+
+// Construtor com parâmetros
+Edge::Edge(float weight, size_t target_id, size_t source_id)
+    : _next_edge(nullptr), _weight(weight), _target_id(target_id), _source_id(source_id) {}
+
+// Getter para _next_edge
+Edge* Edge::get_next_edge() const {
+    return _next_edge;
 }
 
-int Edge::getTargetId() {
-    return this->target_id;
+// Setter para _next_edge
+void Edge::set_next_edge(Edge* next_edge) {
+    _next_edge = next_edge;
 }
 
-float Edge::getWeight() {
-    return this->weight;
+// Getter para _weight
+float Edge::get_weight() const {
+    return _weight;
 }
 
-void Edge::setWeight(float weight) {
-    this->weight = weight;
+// Setter para _weight
+void Edge::set_weight(float weight) {
+    _weight = weight;
+}
+
+// Getter para _target_id
+size_t Edge::get_target_id() const {
+    return _target_id;
+}
+
+// Setter para _target_id
+void Edge::set_target_id(size_t target_id) {
+    _target_id = target_id;
+}
+
+// Getter para _source_id
+size_t Edge::get_source_id() const {
+    return _source_id;
+}
+
+// Setter para _source_id
+void Edge::set_source_id(size_t source_id) {
+    _source_id = source_id;
 }

@@ -2,50 +2,53 @@
 #define GRAPH_HPP
 
 #include "Node.hpp"
-#include "Edge.hpp"
-#include <string>
+#include "AuxGraph.hpp"
 
-#include <queue>
-#include <limits>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
-#include <algorithm>
-
-#include <set>
-#include <stack>
+#include <string>
+#include <cstddef> 
 
 
-class Graph
-{
+
+class Graph {
+private:
+    size_t clusters; // Número de clusters para particionamento
+    std::unordered_map<size_t, Node*> nodes; // Mapa de nós (ID -> Node)
+    size_t number_edges; // Número total de arestas
+    std::unordered_set<D0Pair> d0Pairs; // Armazena pares de nós relacionados
+    std::unordered_set<Y0Triple> y0Triples; // Armazena trios de nós com valores adicionais
+
 public:
-    /*Assinatura dos métodos básicos para o funcionamento da classe*/
-
-    // contrutor e destrutor
-    
-    Graph();
+    // Construtor e Destrutor
+    Graph(const std::string& filename);
     ~Graph();
 
-    // funcoes de arestas
-    void add_edge(size_t node_id_1, size_t node_id_2, float weight = 0);
-    
+    // Métodos Getters e Setters
+    size_t getClusters() const;
+    void setClusters(size_t clusters);
+    Node* getNode(size_t id);
+    void setOutfileName(const std::string& outfile_name);
 
+    // Métodos de Manipulação
+    void addNode(size_t id, float weight = 1.0f);
+    void addEdge(size_t source_id, size_t target_id, float weight);
 
-    // funcoes de no
-    void add_node(size_t node_id, float weight = 0);
-   
-    int conected(size_t node_id_1, size_t node_id_2);
+    // Métodos de leitura e configuração
+    bool readInstance(const std::string& filename);
+    void readGraphFile(const std::string& filename);
+    void addD0Pair(size_t node1, size_t node2);
+    void addY0Triple(size_t node1, size_t node2, size_t node3, float value);
 
+    // Algoritmos para MGGPP
+    int greedyAlgorithm(float alfa = 0.0f);
+    int greedyRandomizedAdaptive(float alfa, int iterations);
+    int greedyRandomizedAdaptiveReactive(const std::vector<float>& alfas, int iterations, int stack);
 
-private:
-    size_t numberNodes;
-    size_t numberEdges;
-    bool   directed; 
-    bool   weightedEdges; 
-    bool   weightedNodes;
-    Node  *first;
-    Node  *last;
-    std::vector<Node> nodes; // Define the nodes member variable
+    // Métodos Auxiliares
+    void printGraph() const;
+    void saveToFile(const std::string& filename) const;
 };
 
-#endif  //GRAPH_HPP
+#endif // GRAPH_HPP

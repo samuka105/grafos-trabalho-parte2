@@ -21,10 +21,23 @@ private:
     std::unordered_set<Y0Triple> y0Triples; // Armazena trios de nós com valores adicionais
 
 public:
+
+
+    //funcoes auxiliares para construtor
+    void readClusters(std::ifstream& file); //Leitura do número de clusters (param p) 
+    void readVertices(std::ifstream& file); //Leitura dos vertices (set V)
+    void readWeights(std::ifstream& file); //Leitura das arestas (param w)
+    void readEdges(std::ifstream& file); //Leitura das arestas (set E)
+    void readD0(std::ifstream& file) ; //Leitura das arestas (set D0)
+    void readY0(std::ifstream& file) ; //Leitura das arestas (set Y0)
     // Construtor e Destrutor
     Graph(const std::string& filename);
     ~Graph();
 
+
+    void printNodes() const ;
+    void printEdges() const;
+    
     // Métodos Getters e Setters
     size_t getClusters() const;
     void setClusters(size_t clusters);

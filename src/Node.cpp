@@ -8,13 +8,14 @@ Node::Node(size_t id, float weight)
     this->node_weight = weight;
 }
 
-size_t Node::getId() {
+size_t Node::getId()const {
     return node_id;
 }
 
-float Node::getNodeWeight() {
+float Node::getNodeWeight()const {
     return node_weight;
 }
+
 
 const std::unordered_map<size_t, Edge>& Node::getEdges() {
     return edges;

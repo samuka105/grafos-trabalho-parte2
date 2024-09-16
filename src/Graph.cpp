@@ -8,32 +8,14 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
-
-// Construtor que lê o arquivo de entrada e inicializa o grafo
-Graph::Graph(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Não foi possível abrir o arquivo " << filename << std::endl;
-        return;
-    }
-
-    std::string line;
-    bool readingVertices = false; // Flag para indicar a leitura de vértices
-    bool readingWeights = false;  // Flag para indicar a leitura de pesos
-    bool readingEdges = false;    // Flag para indicar a leitura de arestas
-    bool readingD0 = false;       // Flag para indicar a leitura de pares D0
-    bool readingY0 = false;       // Flag para indicar a leitura de triplas Y0
-
+// Auxiliares para o construtor
+// Fase 1: Leitura do número de clusters (param p)
+void Graph::readClusters(std::ifstream& file) {
+    std::string line, token;
     while (std::getline(file, line)) {
-        if (line.empty() || line[0] == '#') {
-            // Ignora linhas vazias ou comentários
-            continue;
-        }
-
+        if (line.empty() || line[0] == '#') continue;
         std::istringstream iss(line);
-        std::string token;
         iss >> token;
-
         if (token == "param") {
             std::string paramName;
             iss >> paramName;
@@ -43,125 +25,148 @@ Graph::Graph(const std::string& filename) {
                 if (equalSign == ":=") {
                     iss >> clusters;
                     std::cout << "Número de clusters lido: " << clusters << std::endl;
+                    return;
                 }
             }
-        } else if (token == "set") {
-            std::string setName;
-            iss >> setName;
-            if (setName == "V") {
-                readingVertices = true;
-                readingWeights = false;
-                readingEdges = false;
-                readingD0 = false;
-                readingY0 = false;
-                std::cout << "Início da leitura de vértices" << std::endl;
-            } else if (setName == "w") {
-                readingVertices = false;
-                readingWeights = true;
-                readingEdges = false;
-                readingD0 = false;
-                readingY0 = false;
-                std::cout << "Início da leitura de pesos" << std::endl;
-            } else if (setName == "E") {
-                readingVertices = false;
-                readingWeights = false;
-                readingEdges = true;
-                readingD0 = false;
-                readingY0 = false;
-                std::cout << "Início da leitura de arestas" << std::endl;
-            } else if (setName == "D0") {
-                readingVertices = false;
-                readingWeights = false;
-                readingEdges = false;
-                readingD0 = true;
-                readingY0 = false;
-                std::cout << "Início da leitura de pares D0" << std::endl;
-            } else if (setName == "Y0") {
-                readingVertices = false;
-                readingWeights = false;
-                readingEdges = false;
-                readingD0 = false;
-                readingY0 = true;
-                std::cout << "Início da leitura de triplas Y0" << std::endl;
-            }
-        } else if (readingVertices) {
+        }
+    }
+}
+
+// Fase 2: Leitura dos vértices (set V)
+void Graph::readVertices(std::ifstream& file) {
+    std::string line, token;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream iss(line);
+        iss >> token;
+        if (token == "set" && iss.str().find("V :=") != std::string::npos) {
             size_t nodeId;
             while (iss >> nodeId) {
-                if (nodes.find(nodeId) == nodes.end()) {
-                    addNode(nodeId, 1.0f);
-                    std::cout << "Lendo nó (vertices): " << nodeId << std::endl;
-                } else {
-                    std::cout << "Nó já existe: " << nodeId << std::endl;
-                }
+                addNode(nodeId, 1.0f);
+                std::cout << "Nó lido: " << nodeId << std::endl;
             }
-            readingVertices = false;  // Reseta a flag após processar
-        } else if (readingWeights) {
+            return;
+        }
+    }
+}
+
+// Fase 3: Leitura dos pesos (param w)
+void Graph::readWeights(std::ifstream& file) {
+    std::string line, token;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream iss(line);
+        iss >> token;
+        if (token == "param" && iss.str().find("w :=") != std::string::npos) {
             size_t nodeId;
             float weight;
             while (iss >> nodeId >> weight) {
-                if (nodes.find(nodeId) != nodes.end()) {
-                    nodes[nodeId]->setNodeWeight(weight);
-                    std::cout << "Lendo nó e peso (weights): " << nodeId << " com peso " << weight << std::endl;
-                } else {
-                    addNode(nodeId, weight);
-                    std::cout << "Nó lido e adicionado: " << nodeId << std::endl;
-                }
+                addNode(nodeId, weight);
+                std::cout << "Peso lido para nó " << nodeId << ": " << weight << std::endl;
             }
-            readingWeights = false;  // Reseta a flag após processar
-        } else if (readingEdges) {
+            return;
+        }
+    }
+}
+
+// Fase 4: Leitura das arestas (set E)
+void Graph::readEdges(std::ifstream& file) {
+    std::string line, token;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream iss(line);
+        iss >> token;
+        if (token == "set" && iss.str().find("E :=") != std::string::npos) {
             size_t node1, node2;
             while (iss >> token) {
-                // Verifica se o token está no formato (n1,n2)
                 if (token.front() == '(' && token.back() == ')') {
-                    token.erase(token.begin()); // Remove '('
-                    token.pop_back(); // Remove ')'
-                    std::replace(token.begin(), token.end(), ',', ' '); // Substitui ',' por espaço
+                    token.erase(token.begin());
+                    token.pop_back();
+                    std::replace(token.begin(), token.end(), ',', ' ');
                     std::istringstream edgeStream(token);
                     if (edgeStream >> node1 >> node2) {
                         addEdge(node1, node2, 1.0f);
-                        std::cout << "Lendo aresta: (" << node1 << ", " << node2 << ")" << std::endl;
+                        std::cout << "Aresta lida: (" << node1 << ", " << node2 << ")" << std::endl;
                     }
                 }
             }
-            readingEdges = false;  // Reseta a flag após processar
-        } else if (readingD0) {
+            return;
+        }
+    }
+}
+
+// Fase 5: Leitura dos pares D0 (set D0)
+void Graph::readD0(std::ifstream& file) {
+    std::string line, token;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream iss(line);
+        iss >> token;
+        if (token == "set" && iss.str().find("D0 :=") != std::string::npos) {
             size_t node1, node2;
             while (iss >> token) {
-                // Verifica se o token está no formato (n1,n2)
                 if (token.front() == '(' && token.back() == ')') {
-                    token.erase(token.begin()); // Remove '('
-                    token.pop_back(); // Remove ')'
-                    std::replace(token.begin(), token.end(), ',', ' '); // Substitui ',' por espaço
+                    token.erase(token.begin());
+                    token.pop_back();
+                    std::replace(token.begin(), token.end(), ',', ' ');
                     std::istringstream pairStream(token);
                     if (pairStream >> node1 >> node2) {
                         addD0Pair(node1, node2);
-                        std::cout << "Lendo par D0: (" << node1 << ", " << node2 << ")" << std::endl;
+                        std::cout << "Par D0 lido: (" << node1 << ", " << node2 << ")" << std::endl;
                     }
                 }
             }
-            readingD0 = false;  // Reseta a flag após processar
-        } else if (readingY0) {
-            size_t node1, node2, node3;
-            float value;
-            while (iss >> token) {
-                // Verifica se o token está no formato (n1,n2,n3,v)
-                if (token.front() == '(' && token.back() == ')') {
-                    token.erase(token.begin()); // Remove '('
-                    token.pop_back(); // Remove ')'
-                    std::replace(token.begin(), token.end(), ',', ' '); // Substitui ',' por espaço
-                    std::istringstream tripleStream(token);
-                    if (tripleStream >> node1 >> node2 >> node3 >> value) {
-                        addY0Triple(node1, node2, node3, value);
-                        std::cout << "Lendo tripla Y0: (" << node1 << ", " << node2 << ", " << node3 << ", " << value << ")" << std::endl;
-                    }
-                }
-            }
-            readingY0 = false;  // Reseta a flag após processar
+            return;
         }
     }
-
-    file.close();  // Fecha o arquivo após a leitura
 }
+
+// Fase 6: Leitura das triplas Y0 (set Y0)
+void Graph::readY0(std::ifstream& file) {
+    std::string line, token;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream iss(line);
+        iss >> token;
+        if (token == "set" && iss.str().find("Y0 :=") != std::string::npos) {
+            size_t node1, node2, clusterId;
+            float value;
+            while (iss >> token) {
+                if (token.front() == '(' && token.back() == ')') {
+                    token.erase(token.begin());
+                    token.pop_back();
+                    std::replace(token.begin(), token.end(), ',', ' ');
+                    std::istringstream tripleStream(token);
+                    if (tripleStream >> node1 >> node2 >> clusterId >> value) {
+                        addY0Triple(node1, node2, clusterId, value);
+                        std::cout << "Tripla Y0 lida: (" << node1 << ", " << node2 << ", Cluster: " << clusterId << ", Valor: " << value << ")" << std::endl;
+                    }
+                }
+            }
+            return;
+        }
+    }
+}
+
+// Construtor que lê o arquivo de entrada e inicializa o grafo
+Graph::Graph(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Não foi possível abrir o arquivo " << filename << std::endl;
+        return;
+    }
+
+    // Funçoes auxiliares para construir o grafo
+    readClusters(file);
+    readVertices(file);
+    readWeights(file);
+    readEdges(file);
+    readD0(file);
+    readY0(file);
+
+    file.close();
+}
+
 
 // Destrutor que limpa a memória dos nós
 Graph::~Graph() {
@@ -212,4 +217,13 @@ void Graph::addY0Triple(size_t node1, size_t node2, size_t node3, float value) {
     y0Triples.emplace(node1, node2, node3, value);
     std::cout << "Tripla Y0 adicionada: (" << node1 << ", " << node2 << ", " << node3 << ", " << value << ")" << std::endl;
 }
+
+
+void Graph::printNodes() const {
+    for (const auto& nodePair : nodes) {
+        const Node* node = nodePair.second;
+        std::cout << "Nó ID: " << node->getId() << ", Peso: " << node->getNodeWeight() << std::endl;
+    }
+}
+
 

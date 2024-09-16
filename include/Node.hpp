@@ -16,8 +16,10 @@ public:
     Node(size_t id, float weight = 1.0f);
 
     // Getters
-    size_t getId();
-    float getNodeWeight();
+    size_t getId()const;
+    //float getWeight() const;
+   
+    float getNodeWeight()const;
     const std::unordered_map<size_t, Edge>& getEdges();
 
     // Setters

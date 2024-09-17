@@ -17,7 +17,7 @@ float Node::getNodeWeight()const {
 }
 
 
-const std::unordered_map<size_t, Edge>& Node::getEdges() {
+const std::unordered_map<size_t, Edge>& Node::getEdges()const {
     return edges;
 }
 

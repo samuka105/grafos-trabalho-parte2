@@ -1,3 +1,6 @@
+
+
+
 #include "../include/Edge.hpp"
 
 Edge::Edge(size_t id, float weight)
@@ -11,14 +14,15 @@ Edge::Edge() {
     this->edge_weight = 1.0f;
 }
 
-int Edge::getTargetId() {
+int Edge::getTargetId() const{
     return this->target_id;
 }
 
-float Edge::getWeight() {
+float Edge::getWeight()const {
     return this->edge_weight;
 }
 
 void Edge::setWeight(float weight) {
     this->edge_weight = weight;
 }
+

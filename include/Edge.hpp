@@ -1,9 +1,12 @@
+
+
 #ifndef EDGE_HPP
 #define EDGE_HPP
 
 #include <cstddef>
 class Edge {
 private:
+
     size_t target_id; 
     float edge_weight;  
 
@@ -13,11 +16,13 @@ public:
     Edge();
 
     // Getters
-    int getTargetId();
-    float getWeight();
+
+    int getTargetId()const;
+    float getWeight()const;
 
     // Setters
     void setWeight(float weight);
 };
 
 #endif 
+

@@ -9,7 +9,8 @@ class Node {
 private:
     size_t node_id; 
     float node_weight; 
-    std::unordered_map<size_t, Edge> edges; // Mapa de arestas (target_id -> Edge)
+    std::unordered_map<size_t, Edge> edges ; // Mapa de arestas (target_id -> Edge)
+    
 
 public:
     // Construtor / Cria um novo nó com um ID e um peso (opcional, default é 1.0f)
@@ -20,7 +21,7 @@ public:
     //float getWeight() const;  
    
     float getNodeWeight()const; //Retorno peso do nó
-    const std::unordered_map<size_t, Edge>& getEdges(); //Retorno do mapa de arestas do nó
+    const std::unordered_map<size_t, Edge>& getEdges()const; //Retorno do mapa de arestas do nó
 
     // Setters
     void setNodeWeight(float weight);  //Define o peso do nó

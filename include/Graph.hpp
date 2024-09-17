@@ -38,6 +38,7 @@ public:
     void printNodes() const ;
     void printEdges() const;
     
+    
     // Métodos Getters e Setters
     size_t getClusters() const;
     void setClusters(size_t clusters);

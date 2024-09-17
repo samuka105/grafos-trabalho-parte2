@@ -12,20 +12,20 @@ private:
     std::unordered_map<size_t, Edge> edges; // Mapa de arestas (target_id -> Edge)
 
 public:
-    // Construtor
-    Node(size_t id, float weight = 1.0f);
+    // Construtor / Cria um novo nó com um ID e um peso (opcional, default é 1.0f)
+    Node(size_t id, float weight = 1.0f); 
 
     // Getters
-    size_t getId()const;
-    //float getWeight() const;
+    size_t getId()const;        //Retorna ID do nó
+    //float getWeight() const;  
    
-    float getNodeWeight()const;
-    const std::unordered_map<size_t, Edge>& getEdges();
+    float getNodeWeight()const; //Retorno peso do nó
+    const std::unordered_map<size_t, Edge>& getEdges(); //Retorno do mapa de arestas do nó
 
     // Setters
-    void setNodeWeight(float weight);
-    void addEdge(size_t target_id, float weight);
-    void removeEdge(size_t target_id);
+    void setNodeWeight(float weight);  //Define o peso do nó
+    void addEdge(size_t target_id, float weight); //Adiciona uma aresta ao nó com o ID de destino e peso especificados
+    void removeEdge(size_t target_id); //Remove a aresta com o ID de destino especificado
 };
 
 #endif 

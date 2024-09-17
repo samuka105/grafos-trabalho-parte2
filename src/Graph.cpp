@@ -150,21 +150,25 @@ void Graph::readY0(std::ifstream& file) {
 
 // Construtor que lê o arquivo de entrada e inicializa o grafo
 Graph::Graph(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Não foi possível abrir o arquivo " << filename << std::endl;
-        return;
+    try {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            throw std::runtime_error("Não foi possível abrir o arquivo " + filename);
+        }
+
+        // Funçoes auxiliares para construir o grafo
+        readClusters(file);
+        readVertices(file);
+        readWeights(file);
+        readEdges(file);
+        readD0(file);
+        readY0(file);
+
+        file.close();
+    } catch (const std::exception& e) {
+        std::cerr << "Erro ao construir o grafo: " << e.what() << std::endl;
+        throw; // Re-lança a exceção para que possa ser tratada pelo chamador
     }
-
-    // Funçoes auxiliares para construir o grafo
-    readClusters(file);
-    readVertices(file);
-    readWeights(file);
-    readEdges(file);
-    readD0(file);
-    readY0(file);
-
-    file.close();
 }
 
 

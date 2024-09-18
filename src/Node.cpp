@@ -1,3 +1,5 @@
+
+
 #include "../include/Node.hpp"
 #include "../include/Edge.hpp"
 #include <cstddef>
@@ -32,3 +34,5 @@ void Node::addEdge(size_t target_id, float weight) {
 void Node::removeEdge(size_t target_id) {
     edges.erase(target_id);
 }
+
+

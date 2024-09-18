@@ -9,6 +9,7 @@ private:
 
     size_t target_id; 
     float edge_weight;  
+    
 
 public:
     // Construtor

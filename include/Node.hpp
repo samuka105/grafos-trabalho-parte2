@@ -1,3 +1,7 @@
+
+
+
+
 #ifndef NODE_HPP
 #define NODE_HPP
 
@@ -17,8 +21,7 @@ public:
     Node(size_t id, float weight = 1.0f); 
 
     // Getters
-    size_t getId()const;        //Retorna ID do nó
-    //float getWeight() const;  
+    size_t getId()const;        //Retorna ID do nó 
    
     float getNodeWeight()const; //Retorno peso do nó
     const std::unordered_map<size_t, Edge>& getEdges()const; //Retorno do mapa de arestas do nó
@@ -30,3 +33,6 @@ public:
 };
 
 #endif 
+
+
+

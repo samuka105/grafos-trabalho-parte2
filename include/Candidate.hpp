@@ -12,20 +12,22 @@ struct Candidate
     int target_id;
     int increase_gap;
 
-    friend bool operator<(Candidate c1, Candidate c2) 
+    // Comparação baseada no aumento do gap
+    friend bool operator<(const Candidate& c1, const Candidate& c2) 
     {
         return c1.increase_gap < c2.increase_gap;
     }
 
-    friend bool operator>(Candidate c1, Candidate c2) 
+    friend bool operator>(const Candidate& c1, const Candidate& c2) 
     {
         return c1.increase_gap > c2.increase_gap;
     }
 
-    friend bool operator==(Candidate c1, Candidate c2)
+    // Comparação baseada apenas no nó de destino (target_id)
+    friend bool operator==(const Candidate& c1, const Candidate& c2)
     {
         return c1.target_id == c2.target_id;
     }
 };
 
-#endif 
+#endif

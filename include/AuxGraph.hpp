@@ -36,36 +36,30 @@ struct Y0Triple {
     }
 };
 
-// Função de hash para Y0Triple
-struct Y0TripleHash {
-    std::size_t operator()(const Y0Triple& t) const {
-        auto h1 = std::hash<size_t>{}(t.node1);
-        auto h2 = std::hash<size_t>{}(t.node2);
-        auto h3 = std::hash<size_t>{}(t.node3);
-        auto h4 = std::hash<float>{}(t.value);
-        return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3); // Combinação de hashes
-    }
-};
-
 // Namespace std para especializar o template hash para as estruturas D0Pair e Y0Triple
 namespace std {
     // Especialização do template hash para a estrutura D0Pair
     template <>
     struct hash<D0Pair> {
-        // Função de hash para gerar um valor hash para o D0Pair
         size_t operator()(const D0Pair& pair) const {
-            // Combina os hashes dos identificadores dos nós
-            return hash<size_t>()(pair.node1) ^ hash<size_t>()(pair.node2);
+            // Garante que o hash seja o mesmo para (node1, node2) e (node2, node1)
+            return hash<size_t>()(std::min(pair.node1, pair.node2)) ^ hash<size_t>()(std::max(pair.node1, pair.node2));
         }
     };
     
     // Especialização do template hash para a estrutura Y0Triple
     template <>
     struct hash<Y0Triple> {
-        // Função de hash para gerar um valor hash para o Y0Triple
         size_t operator()(const Y0Triple& triple) const {
-            // Combina os hashes dos identificadores dos nós e o valor adicional
-            return hash<size_t>()(triple.node1) ^ hash<size_t>()(triple.node2) ^ hash<size_t>()(triple.node3) ^ hash<float>()(triple.value);
+            size_t seed = 0;
+            auto hashCombine = [&seed](size_t val) {
+                seed ^= val + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            };
+            hashCombine(hash<size_t>()(triple.node1));
+            hashCombine(hash<size_t>()(triple.node2));
+            hashCombine(hash<size_t>()(triple.node3));
+            hashCombine(hash<float>()(triple.value));
+            return seed;
         }
     };
 }

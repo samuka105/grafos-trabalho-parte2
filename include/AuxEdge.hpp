@@ -22,17 +22,7 @@ struct AuxEdge
         return e1.gap > e2.gap;
     }
 
-    /*
-    bool operator<(const AuxEdge& e) const 
-    {
-        return gap < e.gap;
-    }
 
-    bool operator>(const AuxEdge& e) const 
-    {
-        return gap > e.gap;
-    }
-    */
 };
 
 #endif 

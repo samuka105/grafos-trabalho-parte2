@@ -8,36 +8,32 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
-#include <cstddef> 
-
-
+#include <cstddef>
+#include <memory>  // Para std::unique_ptr
 
 class Graph {
 private:
     size_t clusters; // Número de clusters para particionamento
-    std::unordered_map<size_t, Node*> nodes; // Mapa de nós (ID -> Node)
+    std::unordered_map<size_t, std::unique_ptr<Node>> nodes; // Mapa de nós (ID -> Node)
     size_t number_edges; // Número total de arestas
     std::unordered_set<D0Pair> d0Pairs; // Armazena pares de nós relacionados
     std::unordered_set<Y0Triple> y0Triples; // Armazena trios de nós com valores adicionais
 
 public:
+    // Funções auxiliares para construtor
+    void readClusters(std::ifstream& file); // Leitura do número de clusters (param p)
+    void readVertices(std::ifstream& file); // Leitura dos vertices (set V)
+    void readWeights(std::ifstream& file);  // Leitura das arestas (param w)
+    void readEdges(std::ifstream& file);    // Leitura das arestas (set E)
+    void readD0(std::ifstream& file);       // Leitura das arestas (set D0)
+    void readY0(std::ifstream& file);       // Leitura das arestas (set Y0)
 
-
-    //funcoes auxiliares para construtor
-    void readClusters(std::ifstream& file); //Leitura do número de clusters (param p) 
-    void readVertices(std::ifstream& file); //Leitura dos vertices (set V)
-    void readWeights(std::ifstream& file); //Leitura das arestas (param w)
-    void readEdges(std::ifstream& file); //Leitura das arestas (set E)
-    void readD0(std::ifstream& file) ; //Leitura das arestas (set D0)
-    void readY0(std::ifstream& file) ; //Leitura das arestas (set Y0)
     // Construtor e Destrutor
     Graph(const std::string& filename);
     ~Graph();
 
-
-    void printNodes() const ;
+    void printNodes() const;
     void printEdges() const;
-    
     
     // Métodos Getters e Setters
     size_t getClusters() const;
@@ -48,6 +44,7 @@ public:
     // Métodos de Manipulação
     void addNode(size_t id, float weight = 1.0f);
     void addEdge(size_t source_id, size_t target_id, float weight);
+    bool edgeExists(size_t from, size_t to);
 
     // Métodos de leitura e configuração
     bool readInstance(const std::string& filename);
@@ -63,6 +60,13 @@ public:
     // Métodos Auxiliares
     void printGraph() const;
     void saveToFile(const std::string& filename) const;
+
+
+    //novas 
+    bool validateGraph() const;
+    void removeNode(size_t node_id);
+    void moveNodeToCluster(size_t node_id, size_t new_cluster);
+    bool isGraphConnected() const;
 };
 
 #endif // GRAPH_HPP

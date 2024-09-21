@@ -1,72 +1,33 @@
-#ifndef GRAPH_HPP
-#define GRAPH_HPP
+#ifndef GRAFO_HPP
+#define GRAFO_HPP
 
 #include "Node.hpp"
-#include "AuxGraph.hpp"
-
-#include <vector>
 #include <unordered_map>
-#include <unordered_set>
-#include <string>
-#include <cstddef>
-#include <memory>  // Para std::unique_ptr
+#include <memory>
+#include <vector>
 
 class Graph {
-private:
-    size_t clusters; // Número de clusters para particionamento
-    std::unordered_map<size_t, std::unique_ptr<Node>> nodes; // Mapa de nós (ID -> Node)
-    size_t number_edges; // Número total de arestas
-    std::unordered_set<D0Pair> d0Pairs; // Armazena pares de nós relacionados
-    std::unordered_set<Y0Triple> y0Triples; // Armazena trios de nós com valores adicionais
-
 public:
-    // Funções auxiliares para construtor
-    void readClusters(std::ifstream& file); // Leitura do número de clusters (param p)
-    void readVertices(std::ifstream& file); // Leitura dos vertices (set V)
-    void readWeights(std::ifstream& file);  // Leitura das arestas (param w)
-    void readEdges(std::ifstream& file);    // Leitura das arestas (set E)
-    void readD0(std::ifstream& file);       // Leitura das arestas (set D0)
-    void readY0(std::ifstream& file);       // Leitura das arestas (set Y0)
-
-    // Construtor e Destrutor
-    Graph(const std::string& filename);
-    ~Graph();
-
-    void printNodes() const;
-    void printEdges() const;
+    Graph() = default;
+    Graph(const std::string& filename);  // Construtor que lê o arquivo de entrada
+    bool readInstance(const std::string& filename); // Função para ler instância
     
-    // Métodos Getters e Setters
-    size_t getClusters() const;
-    void setClusters(size_t clusters);
-    Node* getNode(size_t id);
-    void setOutfileName(const std::string& outfile_name);
 
-    // Métodos de Manipulação
-    void addNode(size_t id, float weight = 1.0f);
-    void addEdge(size_t source_id, size_t target_id, float weight);
-    bool edgeExists(size_t from, size_t to);
+    void addNode(size_t id, float weight); // Adiciona um nó ao grafo
+    void addEdge(size_t from, size_t to);  // Adiciona uma aresta ao grafo
+    void printNodes() const;  // Imprime os nós
+    void printEdges() const;  // Imprime as arestas
 
-    // Métodos de leitura e configuração
-    bool readInstance(const std::string& filename);
-    void readGraphFile(const std::string& filename);
-    void addD0Pair(size_t node1, size_t node2);
-    void addY0Triple(size_t node1, size_t node2, size_t node3, float value);
+    bool isGraphConnected() const; // Verifica se o grafo é conectado
+    
+    size_t getClusters() const; // Retorna o número de clusters
 
-    // Algoritmos para MGGPP
-    int greedyAlgorithm(float alfa = 0.0f);
-    int greedyRandomizedAdaptive(float alfa, int iterations);
-    int greedyRandomizedAdaptiveReactive(const std::vector<float>& alfas, int iterations, int stack);
+    double partitionGreedy(); // Algoritmo guloso para particionamento
+    double calculateTotalCost(const std::vector<std::vector<size_t>>& clusters);
 
-    // Métodos Auxiliares
-    void printGraph() const;
-    void saveToFile(const std::string& filename) const;
-
-
-    //novas 
-    bool validateGraph() const;
-    void removeNode(size_t node_id);
-    void moveNodeToCluster(size_t node_id, size_t new_cluster);
-    bool isGraphConnected() const;
+private:
+    size_t k; // Número de clusters
+    std::unordered_map<size_t, std::unique_ptr<Node>> nodes; // Mapa de nós
 };
 
 #endif // GRAPH_HPP

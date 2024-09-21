@@ -1,26 +1,13 @@
-
-
-
 #include "../include/Edge.hpp"
 
-// Construtor com parâmetros
-Edge::Edge(size_t target_id, float weight)
-    : target_id(target_id), edge_weight(weight) {}
+Edge::Edge() : from(0), to(0) {}
+Edge::Edge(size_t from, size_t to) : from(from), to(to) {}
 
-// Construtor padrão
-
-Edge::Edge() : target_id(0), edge_weight(1.0f) {}
-// Getter para target_id
-size_t Edge::getTargetId() const {
-    return target_id;
+size_t Edge::getFrom() const {
+    return from;
 }
 
-// Getter para edge_weight
-float Edge::getWeight() const {
-    return edge_weight;
+size_t Edge::getTo() const {
+    return to;
 }
 
-// Setter para edge_weight
-void Edge::setWeight(float weight) {
-    edge_weight = weight;
-}

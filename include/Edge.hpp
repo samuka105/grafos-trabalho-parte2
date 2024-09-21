@@ -1,26 +1,19 @@
-
-
 #ifndef EDGE_HPP
 #define EDGE_HPP
 
-#include <cstddef>
+#include <cstddef> 
 
 class Edge {
-private:
-    size_t target_id;   // ID do nó de destino
-    float edge_weight;  // Peso da aresta
-
 public:
-    // Construtores
-    Edge(size_t target_id, float weight);
-    Edge() ;  // Inicializa membros com valores padrão
+    Edge();
+    Edge(size_t from, size_t to);
 
-    // Getters
-    size_t getTargetId() const;
-    float getWeight() const; //
+    size_t getFrom() const;  // Retorna o nó de origem
+    size_t getTo() const;    // Retorna o nó de destino
 
-    // Setters
-    void setWeight(float weight);
+private:
+    size_t from;  // Nó de origem
+    size_t to;    // Nó de destino
 };
 
-#endif 
+#endif // EDGE_HPP

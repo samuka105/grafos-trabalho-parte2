@@ -292,7 +292,7 @@ void Graph::printClusters(const std::vector<std::vector<size_t>>& clusters) cons
 
         // Prepare a string para os vértices do cluster
         std::ostringstream vertices;
-        vertices << "Cluster " << (i + 1) << " (Vértices: ";
+        vertices << "Cluster " << (i + 1) << " (Vértices: ";  // Inicializa a string com o nome do cluster
 
         for (size_t j = 0; j < cluster.size(); ++j) {
             vertices << cluster[j];
@@ -302,21 +302,37 @@ void Graph::printClusters(const std::vector<std::vector<size_t>>& clusters) cons
         }
 
         // Adiciona a informação do gap
-        vertices << ") - Gap: " << gap;
+        vertices << ") - Gap: " << gap;  // Adiciona o gap ao final da string
 
         // Imprime o cluster formatado
         std::cout << vertices.str() << std::endl;
     }
 }
 
+/**
+ * Calcula o gap de um cluster, que é a diferença entre o maior e o menor peso
+ * dos nós do cluster.
+ *
+ * @param cluster Vetor com os IDs dos nós do cluster
+ * @return O gap do cluster (diferença entre o maior e o menor peso dos nós)
+ */
 double Graph::calculateClusterGap(const std::vector<size_t>& cluster) const {
     if (cluster.empty()) return 0.0;
 
     double max_weight = std::numeric_limits<double>::lowest();
     double min_weight = std::numeric_limits<double>::max();
 
+    // Percorre todos os nós do cluster
     for (size_t node_id : cluster) {
+        // Verifica se o node_id existe no mapa
+        if (nodes.find(node_id) == nodes.end()) {
+            std::cerr << "Erro: O nó " << node_id << " não existe." << std::endl;
+            continue;
+        }
+
         double weight = nodes.at(node_id)->getWeight();
+
+        // Atualiza o peso máximo e mínimo
         if (weight > max_weight) {
             max_weight = weight;
         }
@@ -327,9 +343,6 @@ double Graph::calculateClusterGap(const std::vector<size_t>& cluster) const {
 
     return max_weight - min_weight;  // Retorna o gap
 }
-
-
-
 
 
 //verificação

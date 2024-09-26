@@ -166,7 +166,10 @@ double Graph::partitionGreedy() {
 
     // Ordena os nós por peso decrescente
     for (const auto& pair : nodes) {
-        sorted_nodes.emplace_back(pair.first, pair.second->getWeight());
+        // Verifica se o node existe (não é um ponteiro nulo)
+        if (pair.second != nullptr) {
+            sorted_nodes.emplace_back(pair.first, pair.second->getWeight());
+        }
     }
     std::sort(sorted_nodes.begin(), sorted_nodes.end(),
               [](const auto& a, const auto& b) {
@@ -182,6 +185,7 @@ double Graph::partitionGreedy() {
 
         // Tenta adicionar o nó em um cluster existente que tenha conectividade e espaço
         for (size_t i = 0; i < k; ++i) {
+            // Verifica se o cluster tem espaço
             if (clusters[i].size() < max_nodes_per_cluster) {
                 size_t connected_node = findConnectedNode(node.first, clusters[i]);
 
@@ -200,6 +204,7 @@ double Graph::partitionGreedy() {
         // Se o nó não puder ser adicionado a nenhum cluster existente, atribui ao menor cluster disponível com espaço
         if (!node_assigned) {
             size_t min_cluster = std::min_element(partition_weights.begin(), partition_weights.end()) - partition_weights.begin();
+            // Verifica se o cluster tem espaço
             if (clusters[min_cluster].size() < max_nodes_per_cluster) {
                 clusters[min_cluster].push_back(node.first);
                 partition_weights[min_cluster] += node.second;

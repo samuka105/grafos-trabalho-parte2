@@ -243,9 +243,25 @@ double Graph::calculateTotalCost(const std::vector<std::vector<size_t>>& cluster
         double max_weight = std::numeric_limits<double>::min();
         double min_weight = std::numeric_limits<double>::max();
 
+        // Verifica se o cluster tem pelo menos um nó
+        if (cluster.size() == 0) {
+            std::cerr << "Erro: cluster vazio." << std::endl;
+            return 0.0;  // Retorna um valor inválido
+        }
+
         // Calcular pesos máximo e mínimo
         for (size_t node_id : cluster) {
+            if (nodes.find(node_id) == nodes.end()) {
+                std::cerr << "Erro: nó " << node_id << " não encontrado no grafo." << std::endl;
+                return 0.0;  // Retorna um valor inválido
+            }
+
             double weight = nodes[node_id]->getWeight();  // Obtenha o peso do nó
+            if (weight < 0.0) {
+                std::cerr << "Erro: peso do nó " << node_id << " é negativo." << std::endl;
+                return 0.0;  // Retorna um valor inválido
+            }
+
             max_weight = std::max(max_weight, weight);
             min_weight = std::min(min_weight, weight);
         }
@@ -265,6 +281,7 @@ double Graph::calculateTotalCost(const std::vector<std::vector<size_t>>& cluster
 
     return total_gap;  // Retorna a soma dos gaps
 }
+
 
 void Graph::printClusters(const std::vector<std::vector<size_t>>& clusters) const {
     for (size_t i = 0; i < clusters.size(); ++i) {

@@ -16,7 +16,7 @@ public:
     void addEdge(size_t to); // Adiciona uma aresta para outro nó
     const std::unordered_map<size_t, Edge>& getEdges() const;  // Retorna as arestas
 
-    bool edgeExists(size_t to) const; // Verifica se uma aresta para o nó `to` existe
+    bool hasEdge(size_t to) const; // Verifica se uma aresta para o nó `to` existe
     void removeEdge(size_t to); // Remove uma aresta para o nó `to`
 
 private:

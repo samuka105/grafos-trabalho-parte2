@@ -17,6 +17,7 @@ public:
     void addEdge(size_t from, size_t to);  // Adiciona uma aresta ao grafo
     void printNodes() const;  // Imprime os nós
     void printEdges() const;  // Imprime as arestas
+    void printClusters(const std::vector<std::vector<size_t>>& clusters) const;
 
     bool isGraphConnected() const; // Verifica se o grafo é conectado
     
@@ -24,10 +25,20 @@ public:
 
     double partitionGreedy(); // Algoritmo guloso para particionamento
     double calculateTotalCost(const std::vector<std::vector<size_t>>& clusters);
+    double calculateClusterGap(const std::vector<size_t>& cluster) const;
+    size_t findEmptyCluster(const std::vector<std::vector<size_t>>& clusters);
+    size_t findConnectedNode(size_t node_id, const std::vector<size_t>& cluster);
+
+    bool verifyAllNodesInSolution(const std::vector<std::vector<size_t>>& clusters);
+    bool isClusterConnected(const std::vector<size_t>& cluster);
+    bool verifyClustersConnectivity(const std::vector<std::vector<size_t>>& clusters);
+    void checkSolution();
 
 private:
     size_t k; // Número de clusters
     std::unordered_map<size_t, std::unique_ptr<Node>> nodes; // Mapa de nós
+    std::vector<std::vector<size_t>> clusters;  // Para armazenar os clusters
+
 };
 
 #endif // GRAPH_HPP

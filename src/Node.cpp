@@ -26,7 +26,7 @@ const std::unordered_map<size_t, Edge>& Node::getEdges() const {
     return edges;
 }
 
-bool Node::edgeExists(size_t to) const {
+bool Node::hasEdge(size_t to) const {
     return edges.find(to) != edges.end();
 }
 

@@ -29,14 +29,17 @@ bool Graph::readInstance(const std::string& filename) {
     }
 
     std::string line;
-    
+
     // Lê o número de clusters
     while (std::getline(file, line)) {
         if (line.find("param p :=") != std::string::npos) {
             std::istringstream iss(line);
             std::string temp;
-            iss >> temp >> temp >> temp;
-            iss >> k;
+            iss >> temp >> temp >> temp;  // Ignora "param p :="
+            if (!(iss >> k) || k <= 0) {
+                std::cerr << "Erro: Número de clusters deve ser maior que zero." << std::endl;
+                return false;  // Retorna falso se k for inválido
+            }
             std::cout << "Número de clusters lido: " << k << std::endl;
             break;
         }
@@ -45,12 +48,15 @@ bool Graph::readInstance(const std::string& filename) {
     // Lê os vértices
     while (std::getline(file, line)) {
         if (line.find("set V :=") != std::string::npos) {
-            std::getline(file, line);
+            std::getline(file, line);  // Próxima linha contém os vértices
             std::istringstream iss(line);
             size_t vertex;
+            std::cout << "Vértices lidos: ";
             while (iss >> vertex) {
                 addNode(vertex, 1.0f);  // Adiciona vértices com peso padrão 1.0f
+                std::cout << vertex << " ";  // Para depuração
             }
+            std::cout << std::endl;
             break;
         }
     }
@@ -62,9 +68,14 @@ bool Graph::readInstance(const std::string& filename) {
                 std::istringstream iss(line);
                 size_t vertex;
                 float weight;
-                iss >> vertex >> weight;
-                nodes[vertex]->setNodeWeight(weight);  // Atualiza o peso dos vértices
-                std::cout << "Peso do vértice " << vertex << ": " << weight << std::endl;  // Para depuração
+                if (iss >> vertex >> weight) {
+                    if (nodes.find(vertex) != nodes.end()) {  // Verifica se o nó foi adicionado
+                        nodes[vertex]->setNodeWeight(weight);  // Atualiza o peso dos vértices
+                        std::cout << "(" << vertex << ": " << weight << " )";  // Para depuração
+                    } else {
+                        std::cerr << "Erro: Vértice " << vertex << " não encontrado." << std::endl;
+                    }
+                }
             }
             break;
         }
@@ -76,11 +87,12 @@ bool Graph::readInstance(const std::string& filename) {
             while (std::getline(file, line) && line.find(";") == std::string::npos) {
                 std::istringstream iss(line);
                 std::string edge;
+                std::cout << "Aresta lida: ";
                 while (iss >> edge) {
                     size_t from, to;
                     if (sscanf(edge.c_str(), "(%zu,%zu)", &from, &to) == 2) {  // Lê as arestas no formato (from,to)
                         addEdge(from, to);  // Adiciona aresta
-                        std::cout << "Aresta lida: (" << from << ", " << to << ")" << std::endl;  // Para depuração
+                        std::cout << " (" << from << ", " << to << ") ";  // Para depuração
                     } else {
                         std::cerr << "Erro ao ler a aresta: " << edge << std::endl;  // Imprime erro
                     }
@@ -94,6 +106,7 @@ bool Graph::readInstance(const std::string& filename) {
     std::cout << "Instância lida com sucesso!" << std::endl;
     return true;
 }
+
 
 
 void Graph::addNode(size_t id, float weight) {
@@ -154,37 +167,44 @@ void Graph:: printk() const {
 
 Solution Graph::partitionGreedy(double alfa) {
     Solution solution;
-    solution.subgraphs.resize(num_subgraphs); // Iniciar a solução com o número de subgrafos
+    solution.subgraphs.resize(num_subgraphs);  // Iniciar a solução com o número de subgrafos
     solution.total_gap = 0.0;
+
+    // Inicializa os subgrafos
+    for (auto& subgraph : solution.subgraphs) {
+        subgraph.max_weight = 0; 
+        subgraph.min_weight = std::numeric_limits<float>::max(); 
+        subgraph.gap = 0; 
+    }
 
     // Lista de vértices não atribuídos
     std::vector<size_t> unassigned_vertices;
     for (const auto& node_pair : nodes) {
-        unassigned_vertices.push_back(node_pair.first); // Insere o ID de cada nó
+        unassigned_vertices.push_back(node_pair.first);  // Insere o ID de cada nó
     }
 
-    // Para cada subgrafo, atribuir os vértices de forma gulosa
+    // Para cada subgrafo, atribuir os vértices
     for (size_t subgraph_idx = 0; subgraph_idx < num_subgraphs; ++subgraph_idx) {
         while (!unassigned_vertices.empty()) {
             std::cout << "Subgrafo " << (subgraph_idx + 1) << ": " << unassigned_vertices.size() << " vértices não atribuídos." << std::endl;
 
             // Gerar a lista de candidatos conectados ao subgrafo
-            std::vector<size_t> candidate_list = getCandidates(solution.subgraphs[subgraph_idx], unassigned_vertices);
+            std::vector<size_t> candidate_list = getCandidates(solution.subgraphs[subgraph_idx].vertices, unassigned_vertices);
             std::cout << "Tamanho da lista de candidatos: " << candidate_list.size() << std::endl;
 
             if (candidate_list.empty()) {
-                if (solution.subgraphs[subgraph_idx].size() < 2) {
+                if (solution.subgraphs[subgraph_idx].vertices.size() < 2) {
                     std::cerr << "Erro: Subgrafo com menos de 2 vértices.\n";
                 }
                 break; // Se não houver candidatos disponíveis
             }
 
-            // Criar a RCL (Restricted Candidate List) com base em alfa
+            // Ordenar candidatos pelo peso
             std::sort(candidate_list.begin(), candidate_list.end(), [&](size_t a, size_t b) {
-                return nodes[a]->getWeight() < nodes[b]->getWeight();  // Ordenar os candidatos pelo peso
+                return nodes[a]->getWeight() < nodes[b]->getWeight();
             });
 
-            // Definindo o tamanho da RCL
+            // Criar a RCL (Restricted Candidate List) com base em alfa
             size_t rcl_size = std::max(static_cast<size_t>(alfa * candidate_list.size()), static_cast<size_t>(1));
             std::vector<size_t> rcl(candidate_list.begin(), candidate_list.begin() + rcl_size);
 
@@ -192,12 +212,18 @@ Solution Graph::partitionGreedy(double alfa) {
             size_t chosen_vertex = rcl[rand() % rcl.size()];
 
             // Adicionar o vértice ao subgrafo
-            solution.subgraphs[subgraph_idx].push_back(chosen_vertex);
+            solution.subgraphs[subgraph_idx].vertices.push_back(chosen_vertex);
             unassigned_vertices.erase(std::remove(unassigned_vertices.begin(), unassigned_vertices.end(), chosen_vertex), unassigned_vertices.end());
+
+            // Atualizar o gap do subgrafo
+            float vertex_weight = nodes[chosen_vertex]->getWeight();
+            solution.subgraphs[subgraph_idx].max_weight = std::max(solution.subgraphs[subgraph_idx].max_weight, vertex_weight);
+            solution.subgraphs[subgraph_idx].min_weight = std::min(solution.subgraphs[subgraph_idx].min_weight, vertex_weight);
+            solution.subgraphs[subgraph_idx].gap = solution.subgraphs[subgraph_idx].max_weight - solution.subgraphs[subgraph_idx].min_weight;
         }
 
-        // Recalcular o gap total ao final de cada subgrafo
-        solution.total_gap += calculateGap(solution.subgraphs[subgraph_idx]);
+        // Atualizar o gap total da solução
+        solution.total_gap += solution.subgraphs[subgraph_idx].gap;
     }
 
     return solution;
@@ -207,7 +233,7 @@ Solution Graph::partitionGreedy(double alfa) {
 
 
 Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
-    Solution best_solution;
+    Solution best_solution(num_subgraphs);  // Inicializa com o número correto de subgrafos
     double best_gap = std::numeric_limits<double>::max(); // Melhor gap inicializado como infinito
 
     for (int i = 0; i < iterations; ++i) {
@@ -225,114 +251,56 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
 }
 
 
-
-double Graph::calculateTotalCost(const std::vector<std::vector<size_t>>& clusters) {
+double Graph::calculateTotalCost(const Solution& solution) {
     double total_gap = 0.0;
 
-    for (const auto& cluster : clusters) {
-        if (cluster.empty()) continue;  // Ignora clusters vazios
-
-        double max_weight = std::numeric_limits<double>::min();
-        double min_weight = std::numeric_limits<double>::max();
-
-        // Verifica se o cluster tem pelo menos um nó
-        if (cluster.size() == 0) {
-            std::cerr << "Erro: cluster vazio." << std::endl;
-            return 0.0;  // Retorna um valor inválido
-        }
-
-        // Calcular pesos máximo e mínimo
-        for (size_t node_id : cluster) {
-            if (nodes.find(node_id) == nodes.end()) {
-                std::cerr << "Erro: nó " << node_id << " não encontrado no grafo." << std::endl;
-                return 0.0;  // Retorna um valor inválido
-            }
-
-            double weight = nodes[node_id]->getWeight();  // Obtenha o peso do nó
-            if (weight < 0.0) {
-                std::cerr << "Erro: peso do nó " << node_id << " é negativo." << std::endl;
-                return 0.0;  // Retorna um valor inválido
-            }
-
-            max_weight = std::max(max_weight, weight);
-            min_weight = std::min(min_weight, weight);
-        }
-
-        double gap = max_weight - min_weight;
-        total_gap += gap;
-
-        // Mostra o cálculo do gap
-        
-        std::cout << "Cluster: ";
-        for (size_t node_id : cluster) {
-            std::cout << node_id << " (peso: " << nodes[node_id]->getWeight() << ") ";
-        }
-        std::cout << " -> Gap: " << gap << " (Max: " << max_weight << ", Min: " << min_weight << ")" << std::endl;
-        
+    for (const auto& subgraph : solution.subgraphs) {
+        total_gap += subgraph.gap;  // O gap de cada subgrafo já foi calculado
     }
 
-    return total_gap;  // Retorna a soma dos gaps
+    return total_gap;
 }
 
 
-void Graph::printClusters(const std::vector<std::vector<size_t>>& clusters) const {
-    for (size_t i = 0; i < clusters.size(); ++i) {
-        const auto& cluster = clusters[i];
 
-        // Calcule o gap para o cluster atual
-        double gap = calculateGap(cluster);
+void Graph::printClusters(const Solution& solution) const {
+    for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
+        const Subgraph& subgraph = solution.subgraphs[i];  // Acessa o subgrafo atual
 
-        // Prepare a string para os vértices do cluster
+        // Prepare a string para os vértices do subgrafo
         std::ostringstream vertices;
         vertices << "Cluster " << (i + 1) << " (Vértices: ";  // Inicializa a string com o nome do cluster
 
-        for (size_t j = 0; j < cluster.size(); ++j) {
-            vertices << cluster[j];
-            if (j < cluster.size() - 1) {
+        for (size_t j = 0; j < subgraph.vertices.size(); ++j) {
+            vertices << subgraph.vertices[j];
+            if (j < subgraph.vertices.size() - 1) {
                 vertices << " ";  // Adiciona espaço entre os vértices
             }
         }
 
         // Adiciona a informação do gap
-        vertices << ") - Gap: " << gap;  // Adiciona o gap ao final da string
+        vertices << ") - Gap: " << subgraph.gap;  // Adiciona o gap ao final da string
 
-        // Imprime o cluster formatado
+        // Imprime o subgrafo formatado
         std::cout << vertices.str() << std::endl;
     }
 }
 
-
-double Graph::calculateGap(const std::vector<size_t>& subgraph) const {
-    if (subgraph.size() < 2) return 0.0;
-    float max_weight = -std::numeric_limits<float>::infinity();
-    float min_weight = std::numeric_limits<float>::infinity();
-
-    for (size_t v : subgraph) {
-        float weight = nodes.at(v)->getWeight();  // Pegue o peso diretamente de nodes
-        max_weight = std::max(max_weight, weight);
-        min_weight = std::min(min_weight, weight);
-    }
-
-    return max_weight - min_weight;
-}
-
-
 std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices) {
     std::vector<size_t> candidates;
-    for (size_t v : unassigned_vertices) {
-        for (size_t u : subgraph) {
-            // Verifique se o vértice u tem uma aresta para v
+    
+    for (size_t u : subgraph) {
+        for (size_t v : unassigned_vertices) {
+            // Verifique se u tem uma aresta para v
             if (nodes[u]->hasEdge(v)) {
                 candidates.push_back(v);
-                break; // Não precisa continuar verificando outros vértices do subgrafo
+                break; // Se já encontrou um candidato para u, não precisa verificar mais
             }
         }
     }
+
     return candidates;
 }
-
-
-
 
 
 //verificação
@@ -341,8 +309,8 @@ bool Graph::verifyAllNodesInSolution(const Solution& solution) {
 
     // Percorre todos os subgrafos e adiciona os nós a um conjunto
     for (const auto& subgraph : solution.subgraphs) {
-        for (const auto& node : subgraph) {
-            all_nodes_in_subgraphs.insert(node);
+        for (const auto& vertex : subgraph.vertices) {
+            all_nodes_in_subgraphs.insert(vertex);
         }
     }
 
@@ -351,15 +319,16 @@ bool Graph::verifyAllNodesInSolution(const Solution& solution) {
 }
 
 
-bool Graph::isClusterConnected(const std::vector<size_t>& subgraph) {
-    if (subgraph.empty()) return true;
+
+bool Graph::isClusterConnected(const Subgraph& subgraph) {
+    if (subgraph.vertices.empty()) return true;
 
     std::unordered_set<size_t> visited;
     std::stack<size_t> to_visit;
 
     // Começa com o primeiro nó do subgrafo
-    to_visit.push(subgraph[0]);
-    visited.insert(subgraph[0]);
+    to_visit.push(subgraph.vertices[0]);
+    visited.insert(subgraph.vertices[0]);
 
     // Faz uma busca em profundidade (DFS) para verificar conectividade
     while (!to_visit.empty()) {
@@ -368,19 +337,19 @@ bool Graph::isClusterConnected(const std::vector<size_t>& subgraph) {
 
         // Explora os vizinhos (arestas) do nó atual
         for (const auto& neighbor : nodes[current_node]->getEdges()) {
-            size_t neighbor_node = neighbor.first;  // Acesse o primeiro elemento do par
-            // Certifique-se de que o neighbor_node é do tipo size_t
+            size_t neighbor_node = neighbor.first;
             if (visited.find(neighbor_node) == visited.end() &&
-                std::find(subgraph.begin(), subgraph.end(), neighbor_node) != subgraph.end()) {
+                std::find(subgraph.vertices.begin(), subgraph.vertices.end(), neighbor_node) != subgraph.vertices.end()) {
                 visited.insert(neighbor_node);
                 to_visit.push(neighbor_node);
             }
         }
     }
 
-    // Verifica se todos os nós do subgrafo foram visitados (se são conectados)
-    return visited.size() == subgraph.size();
+    // Verifica se todos os nós do subgrafo foram visitados
+    return visited.size() == subgraph.vertices.size();
 }
+
 
 
 bool Graph::verifyClustersConnectivity(const Solution& solution) {
@@ -391,6 +360,7 @@ bool Graph::verifyClustersConnectivity(const Solution& solution) {
     }
     return true;  // Se todos os subgrafos forem conectados, retorna verdadeiro
 }
+
 
 void Graph::checkSolution(const Solution& solution) {
     // Verifica se todos os nós estão na solução

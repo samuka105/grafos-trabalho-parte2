@@ -1,6 +1,6 @@
 #include "../include/Graph.hpp"
 #include "../include/Timer.hpp"
-
+#include <random>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -13,6 +13,7 @@
 #include <queue>
 #include <stack>
 #include <limits>
+
 
 Graph::Graph(const std::string& filename) {
     readInstance(filename);
@@ -227,6 +228,81 @@ double Graph::partitionGreedy() {
     return total_cost;
 }
 
+double Graph::partitionGreedyRandomizedAdaptive() {
+    Timer timer;
+    timer.start();
+
+    // Inicialização
+    std::vector<size_t> partition_weights(k, 0);  // Pesos dos clusters
+    std::vector<std::vector<size_t>> clusters(k);  // Clusters
+
+    std::vector<std::pair<size_t, float>> sorted_nodes;
+
+    // Ordena os nós por peso decrescente
+    for (const auto& pair : nodes) {
+        sorted_nodes.emplace_back(pair.first, pair.second->getWeight());
+    }
+    std::sort(sorted_nodes.begin(), sorted_nodes.end(),
+              [](const auto& a, const auto& b) {
+                  return a.second > b.second;  // Ordena do maior para o menor peso
+              });
+
+    // Define um limite máximo de nós por cluster (balanceamento)
+    size_t max_nodes_per_cluster = sorted_nodes.size() / k + 1;  // Distribui aproximadamente igual
+
+    std::random_device rd; // Para geração de números aleatórios
+    std::mt19937 gen(rd()); // Motor de aleatoriedade
+    std::uniform_int_distribution<> dis(0, k - 1); // Distribuição uniforme para selecionar clusters
+
+    // Atribui nós aos clusters
+    for (const auto& node : sorted_nodes) {
+        bool node_assigned = false;
+
+        // Tenta adicionar o nó a um cluster aleatório que tenha conectividade e espaço
+        for (int attempts = 0; attempts < 10 && !node_assigned; ++attempts) {
+            size_t random_cluster = dis(gen); // Seleciona um cluster aleatório
+
+            if (clusters[random_cluster].size() < max_nodes_per_cluster) {
+                size_t connected_node = findConnectedNode(node.first, clusters[random_cluster]);
+
+                // Se encontrar um nó conectado no cluster, adiciona o nó
+                if (connected_node != std::numeric_limits<size_t>::max()) {
+                    clusters[random_cluster].push_back(node.first);
+                    partition_weights[random_cluster] += node.second;
+                    node_assigned = true;
+                    std::cout << "Nó " << node.first << " atribuído ao cluster " << random_cluster 
+                              << " (peso: " << node.second << ")" << std::endl;
+                    break;  // Sai do loop, pois o nó foi atribuído
+                }
+            }
+        }
+
+        // Se o nó não puder ser adicionado a nenhum cluster existente, atribui ao menor cluster disponível com espaço
+        if (!node_assigned) {
+            size_t min_cluster = std::min_element(partition_weights.begin(), partition_weights.end()) - partition_weights.begin();
+            if (clusters[min_cluster].size() < max_nodes_per_cluster) {
+                clusters[min_cluster].push_back(node.first);
+                partition_weights[min_cluster] += node.second;
+                std::cout << "Nó " << node.first << " atribuído ao cluster " << min_cluster 
+                          << " (peso: " << node.second << ") sem conectividade." << std::endl;
+            }
+        }
+    }
+
+    this->clusters = clusters;
+
+    // Calcular o custo total (gap)
+    double total_cost = calculateTotalCost(clusters);
+
+    // Imprimir os clusters formatados
+    printClusters(clusters);
+
+    timer.stop();
+    std::cout << "Custo total: " << total_cost << std::endl;
+    std::cout << "Tempo de execução: " << timer.elapsed() << " segundos." << std::endl;
+
+    return total_cost;
+}
 
 
 size_t Graph::findConnectedNode(size_t node_id, const std::vector<size_t>& cluster) {

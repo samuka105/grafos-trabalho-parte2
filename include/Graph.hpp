@@ -21,9 +21,11 @@ public:
 
     bool isGraphConnected() const; // Verifica se o grafo é conectado
     
+    
     size_t getClusters() const; // Retorna o número de clusters
 
     double partitionGreedy(); // Algoritmo guloso para particionamento
+    double partitionGreedyRandomizedAdaptive();
     double calculateTotalCost(const std::vector<std::vector<size_t>>& clusters);
     double calculateClusterGap(const std::vector<size_t>& cluster) const;
     size_t findEmptyCluster(const std::vector<std::vector<size_t>>& clusters);

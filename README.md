@@ -29,4 +29,4 @@ g++ main.cpp src/Node.cpp src/Edge.cpp src/Graph.cpp -Iinclude -o meu_programa
 ```
 Após compilar, você pode executar o programa com o seguinte comando:
 ```bash
-./meu_programa
+./meu_programa ./instances/n100d03p1i2.txt

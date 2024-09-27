@@ -17,6 +17,8 @@
 
 Graph::Graph(const std::string& filename) {
     readInstance(filename);
+    this->num_vertices = nodes.size(); 
+    this->num_subgraphs = k; 
 }
 
 bool Graph::readInstance(const std::string& filename) {
@@ -30,38 +32,24 @@ bool Graph::readInstance(const std::string& filename) {
     
     // Lê o número de clusters
     while (std::getline(file, line)) {
-        std::cout << "Linha lida: \"" << line << "\"" << std::endl;  // Mostra o que foi lido
-
-        // Verifica se a linha contém a substring
         if (line.find("param p :=") != std::string::npos) {
             std::istringstream iss(line);
             std::string temp;
-            
-            // Lê "param", "p", ":="
             iss >> temp >> temp >> temp;
-
-            // Tenta ler o valor de k
-            if (iss >> k) {
-                std::cout << "Número de clusters lido: " << k << std::endl;
-            } else {
-                std::cerr << "Erro ao ler o número de clusters." << std::endl;
-                k = 0;  // Define um valor padrão ou trate o erro
-            }
-            break;  // Sai do loop após encontrar e ler
+            iss >> k;
+            std::cout << "Número de clusters lido: " << k << std::endl;
+            break;
         }
     }
-
-
 
     // Lê os vértices
     while (std::getline(file, line)) {
         if (line.find("set V :=") != std::string::npos) {
-            std::getline(file, line);  // Próxima linha contém os vértices
+            std::getline(file, line);
             std::istringstream iss(line);
             size_t vertex;
             while (iss >> vertex) {
-                addNode(vertex, 1.0f);  // Adiciona vértices com peso padrão 1.0f (será atualizado depois)
-                std::cout << "Vértice lido: " << vertex << std::endl;
+                addNode(vertex, 1.0f);  // Adiciona vértices com peso padrão 1.0f
             }
             break;
         }
@@ -76,7 +64,7 @@ bool Graph::readInstance(const std::string& filename) {
                 float weight;
                 iss >> vertex >> weight;
                 nodes[vertex]->setNodeWeight(weight);  // Atualiza o peso dos vértices
-                std::cout << "Peso do vértice " << vertex << ": " << weight << std::endl;
+                std::cout << "Peso do vértice " << vertex << ": " << weight << std::endl;  // Para depuração
             }
             break;
         }
@@ -90,9 +78,12 @@ bool Graph::readInstance(const std::string& filename) {
                 std::string edge;
                 while (iss >> edge) {
                     size_t from, to;
-                    sscanf(edge.c_str(), "(%zu,%zu)", &from, &to);  // Lê as arestas no formato (from,to)
-                    addEdge(from, to);  // Adiciona aresta
-                    std::cout << "Aresta lida: (" << from << ", " << to << ")" << std::endl;
+                    if (sscanf(edge.c_str(), "(%zu,%zu)", &from, &to) == 2) {  // Lê as arestas no formato (from,to)
+                        addEdge(from, to);  // Adiciona aresta
+                        std::cout << "Aresta lida: (" << from << ", " << to << ")" << std::endl;  // Para depuração
+                    } else {
+                        std::cerr << "Erro ao ler a aresta: " << edge << std::endl;  // Imprime erro
+                    }
                 }
             }
             break;
@@ -104,10 +95,10 @@ bool Graph::readInstance(const std::string& filename) {
     return true;
 }
 
+
 void Graph::addNode(size_t id, float weight) {
     if (nodes.find(id) == nodes.end()) {
         nodes[id] = std::make_unique<Node>(id, weight);
-        std::cout << "Nó " << id << " adicionado com peso " << weight << std::endl;
     }
 }
 
@@ -115,6 +106,8 @@ void Graph::addEdge(size_t from, size_t to) {
     if (nodes.find(from) != nodes.end() && nodes.find(to) != nodes.end()) {
         nodes[from]->addEdge(to);
         nodes[to]->addEdge(from);  // Se o grafo não for direcionado
+
+        // Remova a verificação de adj_list aqui
     } else {
         std::cerr << "Erro: Um ou ambos os nós (" << from << ", " << to << ") não existem." << std::endl;
     }
@@ -130,7 +123,6 @@ void Graph::printNodes() const {
         }
     }
 }
-
 
 void Graph::printEdges() const {
     if (nodes.empty()) {
@@ -155,165 +147,84 @@ void Graph::printEdges() const {
     }
 }
 
-double Graph::partitionGreedy() {
-    Timer timer;
-    timer.start();
 
-    // Inicialização
-    std::vector<size_t> partition_weights(k, 0);  // Pesos dos clusters
-    std::vector<std::vector<size_t>> clusters(k);  // Clusters
+void Graph:: printk() const {
+    std::cout << "k = " << k << std::endl;
+}
 
-    std::vector<std::pair<size_t, float>> sorted_nodes;
+Solution Graph::partitionGreedy(double alfa) {
+    Solution solution;
+    solution.subgraphs.resize(num_subgraphs); // Iniciar a solução com o número de subgrafos
+    solution.total_gap = 0.0;
 
-    // Ordena os nós por peso decrescente
-    for (const auto& pair : nodes) {
-        // Verifica se o node existe (não é um ponteiro nulo)
-        if (pair.second != nullptr) {
-            sorted_nodes.emplace_back(pair.first, pair.second->getWeight());
-        }
+    // Lista de vértices não atribuídos
+    std::vector<size_t> unassigned_vertices;
+    for (const auto& node_pair : nodes) {
+        unassigned_vertices.push_back(node_pair.first); // Insere o ID de cada nó
     }
-    std::sort(sorted_nodes.begin(), sorted_nodes.end(),
-              [](const auto& a, const auto& b) {
-                  return a.second > b.second;  // Ordena do maior para o menor peso
-              });
 
-    // Define um limite máximo de nós por cluster (balanceamento)
-    size_t max_nodes_per_cluster = sorted_nodes.size() / k + 1;  // Distribui aproximadamente igual
+    // Para cada subgrafo, atribuir os vértices de forma gulosa
+    for (size_t subgraph_idx = 0; subgraph_idx < num_subgraphs; ++subgraph_idx) {
+        while (!unassigned_vertices.empty()) {
+            std::cout << "Subgrafo " << (subgraph_idx + 1) << ": " << unassigned_vertices.size() << " vértices não atribuídos." << std::endl;
 
-    // Atribui nós aos clusters, garantindo conectividade e balanceamento
-    for (const auto& node : sorted_nodes) {
-        bool node_assigned = false;
+            // Gerar a lista de candidatos conectados ao subgrafo
+            std::vector<size_t> candidate_list = getCandidates(solution.subgraphs[subgraph_idx], unassigned_vertices);
+            std::cout << "Tamanho da lista de candidatos: " << candidate_list.size() << std::endl;
 
-        // Tenta adicionar o nó em um cluster existente que tenha conectividade e espaço
-        for (size_t i = 0; i < k; ++i) {
-            // Verifica se o cluster tem espaço
-            if (clusters[i].size() < max_nodes_per_cluster) {
-                size_t connected_node = findConnectedNode(node.first, clusters[i]);
-
-                // Se encontrar um nó conectado no cluster, adiciona o nó
-                if (connected_node != std::numeric_limits<size_t>::max()) {
-                    clusters[i].push_back(node.first);
-                    partition_weights[i] += node.second;
-                    node_assigned = true;
-                    std::cout << "Nó " << node.first << " atribuído ao cluster " << i 
-                              << " (peso: " << node.second << ")" << std::endl;
-                    break;  // Sai do loop, pois o nó foi atribuído
+            if (candidate_list.empty()) {
+                if (solution.subgraphs[subgraph_idx].size() < 2) {
+                    std::cerr << "Erro: Subgrafo com menos de 2 vértices.\n";
                 }
+                break; // Se não houver candidatos disponíveis
             }
+
+            // Criar a RCL (Restricted Candidate List) com base em alfa
+            std::sort(candidate_list.begin(), candidate_list.end(), [&](size_t a, size_t b) {
+                return nodes[a]->getWeight() < nodes[b]->getWeight();  // Ordenar os candidatos pelo peso
+            });
+
+            // Definindo o tamanho da RCL
+            size_t rcl_size = std::max(static_cast<size_t>(alfa * candidate_list.size()), static_cast<size_t>(1));
+            std::vector<size_t> rcl(candidate_list.begin(), candidate_list.begin() + rcl_size);
+
+            // Escolher aleatoriamente um vértice da RCL
+            size_t chosen_vertex = rcl[rand() % rcl.size()];
+
+            // Adicionar o vértice ao subgrafo
+            solution.subgraphs[subgraph_idx].push_back(chosen_vertex);
+            unassigned_vertices.erase(std::remove(unassigned_vertices.begin(), unassigned_vertices.end(), chosen_vertex), unassigned_vertices.end());
         }
 
-        // Se o nó não puder ser adicionado a nenhum cluster existente, atribui ao menor cluster disponível com espaço
-        if (!node_assigned) {
-            size_t min_cluster = std::min_element(partition_weights.begin(), partition_weights.end()) - partition_weights.begin();
-            // Verifica se o cluster tem espaço
-            if (clusters[min_cluster].size() < max_nodes_per_cluster) {
-                clusters[min_cluster].push_back(node.first);
-                partition_weights[min_cluster] += node.second;
-                std::cout << "Nó " << node.first << " atribuído ao cluster " << min_cluster 
-                          << " (peso: " << node.second << ") sem conectividade." << std::endl;
-            }
-        }
-    }
-    this->clusters = clusters;
-    // Calcular o custo total (gap)
-    double total_cost = calculateTotalCost(clusters);
-
-    // Imprimir os clusters formatados
-    printClusters(clusters);
-
-    timer.stop();
-    std::cout << "Custo total: " << total_cost << std::endl;
-    std::cout << "Tempo de execução: " << timer.elapsed() << " segundos." << std::endl;
-
-    return total_cost;
-}
-
-double Graph::partitionGreedyRandomizedAdaptive() {
-    Timer timer;
-    timer.start();
-
-    // Inicialização
-    std::vector<size_t> partition_weights(k, 0);  // Pesos dos clusters
-    std::vector<std::vector<size_t>> clusters(k);  // Clusters
-
-    std::vector<std::pair<size_t, float>> sorted_nodes;
-
-    // Ordena os nós por peso decrescente
-    for (const auto& pair : nodes) {
-        sorted_nodes.emplace_back(pair.first, pair.second->getWeight());
-    }
-    std::sort(sorted_nodes.begin(), sorted_nodes.end(),
-              [](const auto& a, const auto& b) {
-                  return a.second > b.second;  // Ordena do maior para o menor peso
-              });
-
-    // Define um limite máximo de nós por cluster (balanceamento)
-    size_t max_nodes_per_cluster = sorted_nodes.size() / k + 1;  // Distribui aproximadamente igual
-
-    std::random_device rd; // Para geração de números aleatórios
-    std::mt19937 gen(rd()); // Motor de aleatoriedade
-    std::uniform_int_distribution<> dis(0, k - 1); // Distribuição uniforme para selecionar clusters
-
-    // Atribui nós aos clusters
-    for (const auto& node : sorted_nodes) {
-        bool node_assigned = false;
-
-        // Tenta adicionar o nó a um cluster aleatório que tenha conectividade e espaço
-        for (int attempts = 0; attempts < 10 && !node_assigned; ++attempts) {
-            size_t random_cluster = dis(gen); // Seleciona um cluster aleatório
-
-            if (clusters[random_cluster].size() < max_nodes_per_cluster) {
-                size_t connected_node = findConnectedNode(node.first, clusters[random_cluster]);
-
-                // Se encontrar um nó conectado no cluster, adiciona o nó
-                if (connected_node != std::numeric_limits<size_t>::max()) {
-                    clusters[random_cluster].push_back(node.first);
-                    partition_weights[random_cluster] += node.second;
-                    node_assigned = true;
-                    std::cout << "Nó " << node.first << " atribuído ao cluster " << random_cluster 
-                              << " (peso: " << node.second << ")" << std::endl;
-                    break;  // Sai do loop, pois o nó foi atribuído
-                }
-            }
-        }
-
-        // Se o nó não puder ser adicionado a nenhum cluster existente, atribui ao menor cluster disponível com espaço
-        if (!node_assigned) {
-            size_t min_cluster = std::min_element(partition_weights.begin(), partition_weights.end()) - partition_weights.begin();
-            if (clusters[min_cluster].size() < max_nodes_per_cluster) {
-                clusters[min_cluster].push_back(node.first);
-                partition_weights[min_cluster] += node.second;
-                std::cout << "Nó " << node.first << " atribuído ao cluster " << min_cluster 
-                          << " (peso: " << node.second << ") sem conectividade." << std::endl;
-            }
-        }
+        // Recalcular o gap total ao final de cada subgrafo
+        solution.total_gap += calculateGap(solution.subgraphs[subgraph_idx]);
     }
 
-    this->clusters = clusters;
-
-    // Calcular o custo total (gap)
-    double total_cost = calculateTotalCost(clusters);
-
-    // Imprimir os clusters formatados
-    printClusters(clusters);
-
-    timer.stop();
-    std::cout << "Custo total: " << total_cost << std::endl;
-    std::cout << "Tempo de execução: " << timer.elapsed() << " segundos." << std::endl;
-
-    return total_cost;
+    return solution;
 }
 
 
-size_t Graph::findConnectedNode(size_t node_id, const std::vector<size_t>& cluster) {
-    // Busca um nó do cluster que seja conectado ao node_id
-    for (size_t cluster_node : cluster) {
-        if (nodes[node_id]->hasEdge(cluster_node)) {
-            return cluster_node;  // Retorna o primeiro nó conectado encontrado
+
+
+Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
+    Solution best_solution;
+    double best_gap = std::numeric_limits<double>::max(); // Melhor gap inicializado como infinito
+
+    for (int i = 0; i < iterations; ++i) {
+        // Executa o algoritmo guloso
+        Solution current_solution = partitionGreedy(alfa);
+
+        // Verifica se a solução atual é melhor
+        if (current_solution.total_gap < best_gap) {
+            best_gap = current_solution.total_gap;
+            best_solution = current_solution; // Atualiza a melhor solução
         }
     }
-    return std::numeric_limits<size_t>::max();  // Nenhum nó conectado encontrado
+
+    return best_solution;
 }
+
+
 
 double Graph::calculateTotalCost(const std::vector<std::vector<size_t>>& clusters) {
     double total_gap = 0.0;
@@ -369,7 +280,7 @@ void Graph::printClusters(const std::vector<std::vector<size_t>>& clusters) cons
         const auto& cluster = clusters[i];
 
         // Calcule o gap para o cluster atual
-        double gap = calculateClusterGap(cluster);
+        double gap = calculateGap(cluster);
 
         // Prepare a string para os vértices do cluster
         std::ostringstream vertices;
@@ -390,66 +301,65 @@ void Graph::printClusters(const std::vector<std::vector<size_t>>& clusters) cons
     }
 }
 
-/**
- * Calcula o gap de um cluster, que é a diferença entre o maior e o menor peso
- * dos nós do cluster.
- *
- * @param cluster Vetor com os IDs dos nós do cluster
- * @return O gap do cluster (diferença entre o maior e o menor peso dos nós)
- */
-double Graph::calculateClusterGap(const std::vector<size_t>& cluster) const {
-    if (cluster.empty()) return 0.0;
 
-    double max_weight = std::numeric_limits<double>::lowest();
-    double min_weight = std::numeric_limits<double>::max();
+double Graph::calculateGap(const std::vector<size_t>& subgraph) const {
+    if (subgraph.size() < 2) return 0.0;
+    float max_weight = -std::numeric_limits<float>::infinity();
+    float min_weight = std::numeric_limits<float>::infinity();
 
-    // Percorre todos os nós do cluster
-    for (size_t node_id : cluster) {
-        // Verifica se o node_id existe no mapa
-        if (nodes.find(node_id) == nodes.end()) {
-            std::cerr << "Erro: O nó " << node_id << " não existe." << std::endl;
-            continue;
-        }
-
-        double weight = nodes.at(node_id)->getWeight();
-
-        // Atualiza o peso máximo e mínimo
-        if (weight > max_weight) {
-            max_weight = weight;
-        }
-        if (weight < min_weight) {
-            min_weight = weight;
-        }
+    for (size_t v : subgraph) {
+        float weight = nodes.at(v)->getWeight();  // Pegue o peso diretamente de nodes
+        max_weight = std::max(max_weight, weight);
+        min_weight = std::min(min_weight, weight);
     }
 
-    return max_weight - min_weight;  // Retorna o gap
+    return max_weight - min_weight;
 }
+
+
+std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices) {
+    std::vector<size_t> candidates;
+    for (size_t v : unassigned_vertices) {
+        for (size_t u : subgraph) {
+            // Verifique se o vértice u tem uma aresta para v
+            if (nodes[u]->hasEdge(v)) {
+                candidates.push_back(v);
+                break; // Não precisa continuar verificando outros vértices do subgrafo
+            }
+        }
+    }
+    return candidates;
+}
+
+
+
 
 
 //verificação
-bool Graph::verifyAllNodesInSolution(const std::vector<std::vector<size_t>>& clusters) {
-    std::unordered_set<size_t> all_nodes_in_clusters;
-    
-    // Percorre todos os clusters e adiciona os nós a um conjunto
-    for (const auto& cluster : clusters) {
-        for (const auto& node : cluster) {
-            all_nodes_in_clusters.insert(node);
+bool Graph::verifyAllNodesInSolution(const Solution& solution) {
+    std::unordered_set<size_t> all_nodes_in_subgraphs;
+
+    // Percorre todos os subgrafos e adiciona os nós a um conjunto
+    for (const auto& subgraph : solution.subgraphs) {
+        for (const auto& node : subgraph) {
+            all_nodes_in_subgraphs.insert(node);
         }
     }
 
-    // Verifica se o número total de nós nos clusters é igual ao número total de nós no grafo
-    return all_nodes_in_clusters.size() == nodes.size();
+    // Verifica se o número total de nós nos subgrafos é igual ao número total de nós no grafo
+    return all_nodes_in_subgraphs.size() == nodes.size();
 }
 
-bool Graph::isClusterConnected(const std::vector<size_t>& cluster) {
-    if (cluster.empty()) return true;
+
+bool Graph::isClusterConnected(const std::vector<size_t>& subgraph) {
+    if (subgraph.empty()) return true;
 
     std::unordered_set<size_t> visited;
     std::stack<size_t> to_visit;
 
-    // Começa com o primeiro nó do cluster
-    to_visit.push(cluster[0]);
-    visited.insert(cluster[0]);
+    // Começa com o primeiro nó do subgrafo
+    to_visit.push(subgraph[0]);
+    visited.insert(subgraph[0]);
 
     // Faz uma busca em profundidade (DFS) para verificar conectividade
     while (!to_visit.empty()) {
@@ -460,42 +370,46 @@ bool Graph::isClusterConnected(const std::vector<size_t>& cluster) {
         for (const auto& neighbor : nodes[current_node]->getEdges()) {
             size_t neighbor_node = neighbor.first;  // Acesse o primeiro elemento do par
             // Certifique-se de que o neighbor_node é do tipo size_t
-            if (visited.find(neighbor_node) == visited.end() && 
-                std::find(cluster.begin(), cluster.end(), neighbor_node) != cluster.end()) {
+            if (visited.find(neighbor_node) == visited.end() &&
+                std::find(subgraph.begin(), subgraph.end(), neighbor_node) != subgraph.end()) {
                 visited.insert(neighbor_node);
                 to_visit.push(neighbor_node);
             }
         }
     }
 
-    // Verifica se todos os nós do cluster foram visitados (se são conectados)
-    return visited.size() == cluster.size();
+    // Verifica se todos os nós do subgrafo foram visitados (se são conectados)
+    return visited.size() == subgraph.size();
 }
 
 
-
-
-bool Graph::verifyClustersConnectivity(const std::vector<std::vector<size_t>>& clusters) {
-    for (const auto& cluster : clusters) {
-        if (!isClusterConnected(cluster)) {
-            return false;  // Se qualquer cluster não for conectado, retorna falso
+bool Graph::verifyClustersConnectivity(const Solution& solution) {
+    for (const auto& subgraph : solution.subgraphs) {
+        if (!isClusterConnected(subgraph)) {
+            return false;  // Se qualquer subgrafo não for conectado, retorna falso
         }
     }
-    return true;  // Se todos os clusters forem conectados, retorna verdadeiro
+    return true;  // Se todos os subgrafos forem conectados, retorna verdadeiro
 }
 
-void Graph::checkSolution() {
-    if (verifyAllNodesInSolution(clusters)) {
+void Graph::checkSolution(const Solution& solution) {
+    // Verifica se todos os nós estão na solução
+    if (verifyAllNodesInSolution(solution)) {
         std::cout << "Todos os nós estão na solução." << std::endl;
     } else {
         std::cout << "Alguns nós não foram incluídos na solução." << std::endl;
     }
 
-    if (verifyClustersConnectivity(clusters)) {
-        std::cout << "Todos os clusters são conectados." << std::endl;
+    // Verifica a conectividade dos subgrafos
+    if (verifyClustersConnectivity(solution)) {
+        std::cout << "Todos os subgrafos são conectados." << std::endl;
     } else {
-        std::cout << "Alguns clusters não são conectados." << std::endl;
+        std::cout << "Alguns subgrafos não são conectados." << std::endl;
     }
 }
+
+
+
+
 
 

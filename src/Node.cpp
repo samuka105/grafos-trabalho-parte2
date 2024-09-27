@@ -18,7 +18,6 @@ void Node::setNodeWeight(float weight) {
 void Node::addEdge(size_t to) {
     if (edges.find(to) == edges.end()) {
         edges[to] = Edge(id, to);
-        std::cout << "Aresta adicionada: (" << id << " - " << to << ")" << std::endl;
     }
 }
 

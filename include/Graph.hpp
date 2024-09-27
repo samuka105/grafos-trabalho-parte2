@@ -6,6 +6,17 @@
 #include <memory>
 #include <vector>
 
+
+struct Candidate {
+    size_t vertex;
+    float weight;
+};
+
+struct Solution {
+    std::vector<std::vector<size_t>> subgraphs;
+    double total_gap;
+};
+
 class Graph {
 public:
     Graph() = default;
@@ -15,31 +26,32 @@ public:
 
     void addNode(size_t id, float weight); // Adiciona um nó ao grafo
     void addEdge(size_t from, size_t to);  // Adiciona uma aresta ao grafo
+
+
     void printNodes() const;  // Imprime os nós
     void printEdges() const;  // Imprime as arestas
+    void printAdjList() const;
+    void printk() const;
     void printClusters(const std::vector<std::vector<size_t>>& clusters) const;
-
-    bool isGraphConnected() const; // Verifica se o grafo é conectado
     
-    
-    size_t getClusters() const; // Retorna o número de clusters
+    Solution partitionGreedy(double alfa); // Algoritmo guloso para particionamento
+    Solution partitionGreedyRandomizedAdaptive(double alfa, int iterations);
 
-    double partitionGreedy(); // Algoritmo guloso para particionamento
-    double partitionGreedyRandomizedAdaptive();
     double calculateTotalCost(const std::vector<std::vector<size_t>>& clusters);
-    double calculateClusterGap(const std::vector<size_t>& cluster) const;
-    size_t findEmptyCluster(const std::vector<std::vector<size_t>>& clusters);
-    size_t findConnectedNode(size_t node_id, const std::vector<size_t>& cluster);
+    double calculateGap(const std::vector<size_t>& subgraph) const;
+    std::vector<size_t> getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices);
 
-    bool verifyAllNodesInSolution(const std::vector<std::vector<size_t>>& clusters);
-    bool isClusterConnected(const std::vector<size_t>& cluster);
-    bool verifyClustersConnectivity(const std::vector<std::vector<size_t>>& clusters);
-    void checkSolution();
-
+    bool verifyAllNodesInSolution(const Solution& solution);
+    bool isClusterConnected(const std::vector<size_t>& subgraph);
+    bool verifyClustersConnectivity(const Solution& solution);
+    void checkSolution(const Solution& solution);
+    
 private:
     size_t k; // Número de clusters
     std::unordered_map<size_t, std::unique_ptr<Node>> nodes; // Mapa de nós
-    std::vector<std::vector<size_t>> clusters;  // Para armazenar os clusters
+    std::vector<float> weights;  // Pesos dos vértices
+    size_t num_vertices;  // Número de vértices
+    size_t num_subgraphs; // Número de subgrafos
 
 };
 

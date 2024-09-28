@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
     // Verifique a solução
     std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
     grafo.printClusters(solution); // Imprime os clusters
+    grafo.checkSolution(solution); // Verifica se a solução é consistente
 
     return 0;
 }

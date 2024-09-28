@@ -223,6 +223,9 @@ Solution Graph::partitionGreedy(double alfa) {
         // Escolher aleatoriamente um vértice da RCL
         size_t chosen_vertex = rcl[rand() % rcl.size()];
 
+        // Atualizar o gap do subgrafo antes de adicionar o novo vértice
+        float previous_gap = current_subgraph.gap;
+
         // Adicionar o vértice ao subgrafo
         current_subgraph.vertices.push_back(chosen_vertex);
         unassigned_vertices.erase(std::remove(unassigned_vertices.begin(), unassigned_vertices.end(), chosen_vertex), unassigned_vertices.end());
@@ -233,8 +236,8 @@ Solution Graph::partitionGreedy(double alfa) {
         current_subgraph.min_weight = std::min(current_subgraph.min_weight, vertex_weight);
         current_subgraph.gap = current_subgraph.max_weight - current_subgraph.min_weight;
 
-        // Atualizar o gap total da solução
-        solution.total_gap += current_subgraph.gap;
+        // Atualizar o gap total da solução com a diferença no gap
+        solution.total_gap += (current_subgraph.gap - previous_gap);
 
         // Alterna para o próximo subgrafo para balancear a distribuição
         current_subgraph_idx = (current_subgraph_idx + 1) % num_subgraphs;
@@ -242,6 +245,7 @@ Solution Graph::partitionGreedy(double alfa) {
 
     return solution;
 }
+
 
 
 

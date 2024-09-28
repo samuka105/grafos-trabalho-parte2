@@ -166,69 +166,82 @@ void Graph:: printk() const {
 }
 
 Solution Graph::partitionGreedy(double alfa) {
-    Solution solution;
-    solution.subgraphs.resize(num_subgraphs);  // Iniciar a solução com o número de subgrafos
+    Solution solution(num_subgraphs);  // Inicializa a solução com o número de subgrafos
     solution.total_gap = 0.0;
 
-    // Inicializa os subgrafos
-    for (auto& subgraph : solution.subgraphs) {
-        subgraph.max_weight = 0; 
-        subgraph.min_weight = std::numeric_limits<float>::max(); 
-        subgraph.gap = 0; 
-    }
-
-    // Lista de vértices não atribuídos
+    // Inicializa a lista de vértices não atribuídos
     std::vector<size_t> unassigned_vertices;
     for (const auto& node_pair : nodes) {
         unassigned_vertices.push_back(node_pair.first);  // Insere o ID de cada nó
     }
 
-    // Para cada subgrafo, atribuir os vértices
+    // Atribui um vértice inicial a cada subgrafo para garantir que todos os subgrafos tenham pelo menos um vértice
     for (size_t subgraph_idx = 0; subgraph_idx < num_subgraphs; ++subgraph_idx) {
-        while (!unassigned_vertices.empty()) {
-            std::cout << "Subgrafo " << (subgraph_idx + 1) << ": " << unassigned_vertices.size() << " vértices não atribuídos." << std::endl;
+        size_t initial_vertex = unassigned_vertices.back();
+        unassigned_vertices.pop_back();  // Remove o vértice dos não atribuídos
+        
+        // Adiciona o vértice ao subgrafo
+        solution.subgraphs[subgraph_idx].vertices.push_back(initial_vertex);
+        
+        // Atualiza o peso do subgrafo
+        float initial_weight = nodes[initial_vertex]->getWeight();
+        solution.subgraphs[subgraph_idx].max_weight = initial_weight;
+        solution.subgraphs[subgraph_idx].min_weight = initial_weight;
+        solution.subgraphs[subgraph_idx].gap = 0.0;
 
-            // Gerar a lista de candidatos conectados ao subgrafo
-            std::vector<size_t> candidate_list = getCandidates(solution.subgraphs[subgraph_idx].vertices, unassigned_vertices);
-            std::cout << "Tamanho da lista de candidatos: " << candidate_list.size() << std::endl;
+        std::cout << "Subgrafo " << subgraph_idx + 1 << " iniciado com vértice " << initial_vertex << std::endl;
+    }
 
-            if (candidate_list.empty()) {
-                if (solution.subgraphs[subgraph_idx].vertices.size() < 2) {
-                    std::cerr << "Erro: Subgrafo com menos de 2 vértices.\n";
-                }
-                break; // Se não houver candidatos disponíveis
+    // Alterna entre os subgrafos para distribuir os vértices
+    size_t current_subgraph_idx = 0;
+    while (!unassigned_vertices.empty()) {
+        // Seleciona o subgrafo atual
+        Subgraph& current_subgraph = solution.subgraphs[current_subgraph_idx];
+
+        // Gerar a lista de candidatos conectados ao subgrafo atual
+        std::vector<size_t> candidate_list = getCandidates(current_subgraph.vertices, unassigned_vertices);
+        std::cout << "Subgrafo " << (current_subgraph_idx + 1) << ": " << unassigned_vertices.size() << " vértices não atribuídos." << std::endl;
+        std::cout << "Tamanho da lista de candidatos: " << candidate_list.size() << std::endl;
+
+        if (candidate_list.empty()) {
+            if (current_subgraph.vertices.size() < 2) {
+                std::cerr << "Erro: Subgrafo com menos de 2 vértices.\n";
             }
-
-            // Ordenar candidatos pelo peso
-            std::sort(candidate_list.begin(), candidate_list.end(), [&](size_t a, size_t b) {
-                return nodes[a]->getWeight() < nodes[b]->getWeight();
-            });
-
-            // Criar a RCL (Restricted Candidate List) com base em alfa
-            size_t rcl_size = std::max(static_cast<size_t>(alfa * candidate_list.size()), static_cast<size_t>(1));
-            std::vector<size_t> rcl(candidate_list.begin(), candidate_list.begin() + rcl_size);
-
-            // Escolher aleatoriamente um vértice da RCL
-            size_t chosen_vertex = rcl[rand() % rcl.size()];
-
-            // Adicionar o vértice ao subgrafo
-            solution.subgraphs[subgraph_idx].vertices.push_back(chosen_vertex);
-            unassigned_vertices.erase(std::remove(unassigned_vertices.begin(), unassigned_vertices.end(), chosen_vertex), unassigned_vertices.end());
-
-            // Atualizar o gap do subgrafo
-            float vertex_weight = nodes[chosen_vertex]->getWeight();
-            solution.subgraphs[subgraph_idx].max_weight = std::max(solution.subgraphs[subgraph_idx].max_weight, vertex_weight);
-            solution.subgraphs[subgraph_idx].min_weight = std::min(solution.subgraphs[subgraph_idx].min_weight, vertex_weight);
-            solution.subgraphs[subgraph_idx].gap = solution.subgraphs[subgraph_idx].max_weight - solution.subgraphs[subgraph_idx].min_weight;
+            current_subgraph_idx = (current_subgraph_idx + 1) % num_subgraphs;  // Alterna para o próximo subgrafo
+            continue;
         }
 
+        // Ordenar os candidatos pelo peso do vértice (vértices com pesos menores são preferidos)
+        std::sort(candidate_list.begin(), candidate_list.end(), [&](size_t a, size_t b) {
+            return nodes[a]->getWeight() < nodes[b]->getWeight();
+        });
+
+        // Criar a RCL (Restricted Candidate List) com base em alfa
+        size_t rcl_size = std::max(static_cast<size_t>(alfa * candidate_list.size()), static_cast<size_t>(1));
+        std::vector<size_t> rcl(candidate_list.begin(), candidate_list.begin() + rcl_size);
+
+        // Escolher aleatoriamente um vértice da RCL
+        size_t chosen_vertex = rcl[rand() % rcl.size()];
+
+        // Adicionar o vértice ao subgrafo
+        current_subgraph.vertices.push_back(chosen_vertex);
+        unassigned_vertices.erase(std::remove(unassigned_vertices.begin(), unassigned_vertices.end(), chosen_vertex), unassigned_vertices.end());
+
+        // Atualizar o gap do subgrafo
+        float vertex_weight = nodes[chosen_vertex]->getWeight();
+        current_subgraph.max_weight = std::max(current_subgraph.max_weight, vertex_weight);
+        current_subgraph.min_weight = std::min(current_subgraph.min_weight, vertex_weight);
+        current_subgraph.gap = current_subgraph.max_weight - current_subgraph.min_weight;
+
         // Atualizar o gap total da solução
-        solution.total_gap += solution.subgraphs[subgraph_idx].gap;
+        solution.total_gap += current_subgraph.gap;
+
+        // Alterna para o próximo subgrafo para balancear a distribuição
+        current_subgraph_idx = (current_subgraph_idx + 1) % num_subgraphs;
     }
 
     return solution;
 }
-
 
 
 

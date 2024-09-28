@@ -41,7 +41,6 @@ bool Graph::readInstance(const std::string& filename) {
                 std::cerr << "Erro: Número de clusters deve ser maior que zero." << std::endl;
                 return false;  // Retorna falso se k for inválido
             }
-            std::cout << "Número de clusters lido: " << k << std::endl;
             break;
         }
     }
@@ -52,12 +51,9 @@ bool Graph::readInstance(const std::string& filename) {
             std::getline(file, line);  // Próxima linha contém os vértices
             std::istringstream iss(line);
             size_t vertex;
-            std::cout << "Vértices lidos: ";
             while (iss >> vertex) {
                 addNode(vertex, 1.0f);  // Adiciona vértices com peso padrão 1.0f
-                std::cout << vertex << " ";  // Para depuração
             }
-            std::cout << std::endl;
             break;
         }
     }
@@ -72,7 +68,6 @@ bool Graph::readInstance(const std::string& filename) {
                 if (iss >> vertex >> weight) {
                     if (nodes.find(vertex) != nodes.end()) {  // Verifica se o nó foi adicionado
                         nodes[vertex]->setNodeWeight(weight);  // Atualiza o peso dos vértices
-                        std::cout << "(" << vertex << ": " << weight << " )";  // Para depuração
                     } else {
                         std::cerr << "Erro: Vértice " << vertex << " não encontrado." << std::endl;
                     }
@@ -88,12 +83,10 @@ bool Graph::readInstance(const std::string& filename) {
             while (std::getline(file, line) && line.find(";") == std::string::npos) {
                 std::istringstream iss(line);
                 std::string edge;
-                std::cout << "Aresta lida: ";
                 while (iss >> edge) {
                     size_t from, to;
                     if (sscanf(edge.c_str(), "(%zu,%zu)", &from, &to) == 2) {  // Lê as arestas no formato (from,to)
                         addEdge(from, to);  // Adiciona aresta
-                        std::cout << " (" << from << ", " << to << ") ";  // Para depuração
                     } else {
                         std::cerr << "Erro ao ler a aresta: " << edge << std::endl;  // Imprime erro
                     }
@@ -104,7 +97,6 @@ bool Graph::readInstance(const std::string& filename) {
     }
 
     file.close();
-    std::cout << "Instância lida com sucesso!" << std::endl;
     return true;
 }
 
@@ -190,7 +182,6 @@ Solution Graph::partitionGreedy(double alfa) {
         solution.subgraphs[subgraph_idx].min_weight = initial_weight;
         solution.subgraphs[subgraph_idx].gap = 0.0;
 
-        std::cout << "Subgrafo " << subgraph_idx + 1 << " iniciado com vértice " << initial_vertex << std::endl;
     }
 
     // Alterna entre os subgrafos para distribuir os vértices
@@ -201,8 +192,6 @@ Solution Graph::partitionGreedy(double alfa) {
 
         // Gerar a lista de candidatos conectados ao subgrafo atual
         std::vector<size_t> candidate_list = getCandidates(current_subgraph.vertices, unassigned_vertices);
-        std::cout << "Subgrafo " << (current_subgraph_idx + 1) << ": " << unassigned_vertices.size() << " vértices não atribuídos." << std::endl;
-        std::cout << "Tamanho da lista de candidatos: " << candidate_list.size() << std::endl;
 
         if (candidate_list.empty()) {
             if (current_subgraph.vertices.size() < 2) {
@@ -253,10 +242,11 @@ Solution Graph::partitionGreedy(double alfa) {
 Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
     Solution best_solution(num_subgraphs);  // Inicializa com o número correto de subgrafos
     double best_gap = std::numeric_limits<double>::max(); // Melhor gap inicializado como infinito
+    Solution current_solution = partitionGreedy(1);
 
     for (int i = 0; i < iterations; ++i) {
         // Executa o algoritmo guloso
-        Solution current_solution = partitionGreedy(alfa);
+        current_solution = partitionGreedy(alfa);
 
         // Verifica se a solução atual é melhor
         if (current_solution.total_gap < best_gap) {
@@ -269,31 +259,58 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
 }
 
 
-Solution Graph::partitionGreedyRandomizedAdaptiveReactive(double initial_alfa, int max_iterations, double max_gap, double min_gap) {
+Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
+    std::vector<double> alphas = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};  // Lista de valores de alfa
+    std::vector<double> probabilities(alphas.size(), 1.0 / alphas.size());  // Probabilidades uniformes
+    std::vector<double> scores(alphas.size(), 0.0);  // Armazena os scores de cada alfa
+
+    Solution current_solution = partitionGreedy(1);
     Solution best_solution(num_subgraphs);  // Inicializa com o número correto de subgrafos
     double best_gap = std::numeric_limits<double>::max(); // Melhor gap inicializado como infinito
-    double alfa = initial_alfa;
 
-    for (int i = 0; i < max_iterations; ++i) {
-        // Executa o algoritmo guloso com alpha adaptativo
-        Solution current_solution = partitionGreedy(alfa);
+    for (int i = 0; i < iterations; ++i) {
+        // Escolhe o valor de alfa baseado nas probabilidades
+        double random_value = (double)rand() / RAND_MAX;
+        double cumulative_prob = 0.0;
+        size_t chosen_alpha_idx = 0;
+
+        for (size_t j = 0; j < probabilities.size(); ++j) {
+            cumulative_prob += probabilities[j];
+            if (random_value <= cumulative_prob) {
+                chosen_alpha_idx = j;
+                break;
+            }
+        }
+
+        double chosen_alpha = alphas[chosen_alpha_idx];
+        current_solution = partitionGreedy(chosen_alpha);
 
         // Verifica se a solução atual é melhor
         if (current_solution.total_gap < best_gap) {
             best_gap = current_solution.total_gap;
-            best_solution = current_solution; // Atualiza a melhor solução
+            best_solution = current_solution;  // Atualiza a melhor solução
         }
 
-        // Ajusta o valor de alpha de acordo com o gap atual
-        if (best_gap > max_gap) {
-            alfa = std::min(alfa + (max_gap - best_gap) / (max_gap - min_gap), 1.0);
-        } else if (best_gap < min_gap) {
-            alfa = std::max(alfa - (best_gap - min_gap) / (max_gap - min_gap), 0.0);
+        // Atualiza os scores e probabilidades
+        scores[chosen_alpha_idx] += (best_gap - current_solution.total_gap);  // Melhor solução ganha mais score
+
+        // Atualiza as probabilidades com base nos scores
+        double total_score = std::accumulate(scores.begin(), scores.end(), 0.0);
+        if (total_score > 0) {
+            for (size_t j = 0; j < probabilities.size(); ++j) {
+                probabilities[j] = scores[j] / total_score;  // Normaliza as probabilidades
+            }
+        } else {
+            // Se todos os scores forem zero, mantemos probabilidades uniformes
+            std::fill(probabilities.begin(), probabilities.end(), 1.0 / probabilities.size());
         }
+
+        //std::cout << "Iteração " << i + 1 << " - Alfa escolhido: " << chosen_alpha << " - Gap da solução: " << current_solution.total_gap << std::endl;
     }
 
     return best_solution;
 }
+
 
 
 double Graph::calculateTotalCost(const Solution& solution) {

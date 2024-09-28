@@ -66,8 +66,7 @@ public:
     
     Solution partitionGreedy(double alfa); // Algoritmo guloso para particionamento
     Solution partitionGreedyRandomizedAdaptive(double alfa, int iterations);
-
-    Solution partitionGreedyRandomizedAdaptiveReactive(double initial_alfa, int max_iterations, double max_gap, double min_gap);
+    Solution partitionGreedyRandomizedAdaptiveReactive(int iterations);
 
     double calculateTotalCost(const Solution& solution);
     double calculateGap(const Subgraph& subgraph) const;

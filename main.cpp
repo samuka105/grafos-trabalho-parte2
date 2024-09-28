@@ -9,6 +9,7 @@ int exibirMenu() {
     std::cout << "\nEscolha o método:\n";
     std::cout << "1) Algoritmo Guloso\n";
     std::cout << "2) Algoritmo Guloso Randomizado Adaptativo\n";
+    std::cout << "3) Algoritmo Guloso Randomizado Adaptativo Reativo (em desenvolvimento)\n";
     std::cout << "Escolha: ";
     std::cin >> escolha;
     return escolha;
@@ -21,17 +22,53 @@ int main(int argc, char** argv) {
     }
 
     Graph grafo(argv[1]);
-    
-    // Execute o algoritmo guloso
-    double alpha = 1.0; // Ou um valor que você queira testar
-    Solution solution = grafo.partitionGreedy(alpha);
 
-    // Verifique a solução
-    std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
-    grafo.printClusters(solution); // Imprime os clusters
-    grafo.checkSolution(solution); // Verifica se a solução é consistente
-    grafo.printGapDetails(solution); // Imprime os detalhes dos gaps
+    // Exibir o menu
+    int escolha = exibirMenu();
+    
+    switch (escolha) {
+        case 1: {
+            // Algoritmo Guloso
+            double alpha = 1.0; // Alpha fixo em 1 para o algoritmo guloso
+            Solution solution = grafo.partitionGreedy(alpha);
+            std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+            grafo.printClusters(solution); // Imprime os clusters
+            grafo.checkSolution(solution); // Verifica se a solução é consistente
+            grafo.printGapDetails(solution); // Imprime os detalhes dos gaps
+            break;
+        }
+        case 2: {
+            // Algoritmo Guloso Randomizado Adaptativo
+            double alpha;
+            int iterations;
+
+            std::cout << "Digite o valor de alpha (0 a 1): ";
+            std::cin >> alpha;
+
+            // Validação do valor de alpha
+            while (alpha < 0.0 || alpha > 1.0) {
+                std::cout << "Valor inválido. Digite o valor de alpha (0 a 1): ";
+                std::cin >> alpha;
+            }
+
+            std::cout << "Digite o número de iterações: ";
+            std::cin >> iterations;
+
+            Solution solution = grafo.partitionGreedyRandomizedAdaptive(alpha, iterations);
+            std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+            grafo.printClusters(solution); // Imprime os clusters
+            grafo.checkSolution(solution); // Verifica se a solução é consistente
+            grafo.printGapDetails(solution); // Imprime os detalhes dos gaps
+            break;
+        }
+        case 3: {
+            std::cout << "Algoritmo Guloso Randomizado Adaptativo Reativo em desenvolvimento.\n";
+            break;
+        }
+        default:
+            std::cout << "Escolha inválida.\n";
+            break;
+    }
 
     return 0;
 }
-

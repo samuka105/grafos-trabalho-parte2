@@ -13,6 +13,7 @@
 #include <queue>
 #include <stack>
 #include <limits>
+#include "Graph.hpp"
 
 
 Graph::Graph(const std::string& filename) {
@@ -261,6 +262,33 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
         if (current_solution.total_gap < best_gap) {
             best_gap = current_solution.total_gap;
             best_solution = current_solution; // Atualiza a melhor solução
+        }
+    }
+
+    return best_solution;
+}
+
+
+Solution Graph::partitionGreedyRandomizedAdaptiveReactive(double initial_alfa, int max_iterations, double max_gap, double min_gap) {
+    Solution best_solution(num_subgraphs);  // Inicializa com o número correto de subgrafos
+    double best_gap = std::numeric_limits<double>::max(); // Melhor gap inicializado como infinito
+    double alfa = initial_alfa;
+
+    for (int i = 0; i < max_iterations; ++i) {
+        // Executa o algoritmo guloso com alpha adaptativo
+        Solution current_solution = partitionGreedy(alfa);
+
+        // Verifica se a solução atual é melhor
+        if (current_solution.total_gap < best_gap) {
+            best_gap = current_solution.total_gap;
+            best_solution = current_solution; // Atualiza a melhor solução
+        }
+
+        // Ajusta o valor de alpha de acordo com o gap atual
+        if (best_gap > max_gap) {
+            alfa = std::min(alfa + (max_gap - best_gap) / (max_gap - min_gap), 1.0);
+        } else if (best_gap < min_gap) {
+            alfa = std::max(alfa - (best_gap - min_gap) / (max_gap - min_gap), 0.0);
         }
     }
 

@@ -67,6 +67,8 @@ public:
     Solution partitionGreedy(double alfa); // Algoritmo guloso para particionamento
     Solution partitionGreedyRandomizedAdaptive(double alfa, int iterations);
 
+    Solution partitionGreedyRandomizedAdaptiveReactive(double initial_alfa, int max_iterations, double max_gap, double min_gap);
+
     double calculateTotalCost(const Solution& solution);
     double calculateGap(const Subgraph& subgraph) const;
     std::vector<size_t>getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices);

@@ -61,10 +61,39 @@ int main(int argc, char** argv) {
             grafo.printGapDetails(solution); // Imprime os detalhes dos gaps
             break;
         }
+        
         case 3: {
-            std::cout << "Algoritmo Guloso Randomizado Adaptativo Reativo em desenvolvimento.\n";
-            break;
+        // Algoritmo Guloso Randomizado Adaptativo Reativo
+        double initial_alfa;
+        int max_iterations;
+        double max_gap;
+        double min_gap;
+
+        std::cout << "Digite o valor inicial de alfa (0 a 1): ";
+        std::cin >> initial_alfa;
+
+        // Validação do valor de alfa
+        while (initial_alfa < 0.0 || initial_alfa > 1.0) {
+            std::cout << "Valor inválido. Digite o valor inicial de alfa (0 a 1): ";
+            std::cin >> initial_alfa;
         }
+
+        std::cout << "Digite o número máximo de iterações: ";
+        std::cin >> max_iterations;
+
+        std::cout << "Digite o gap máximo permitido: ";
+        std::cin >> max_gap;
+
+        std::cout << "Digite o gap mínimo permitido: ";
+        std::cin >> min_gap;
+
+        Solution solution = grafo.partitionGreedyRandomizedAdaptiveReactive(initial_alfa, max_iterations, max_gap, min_gap);
+        std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+        grafo.printClusters(solution); // Imprime os clusters
+        grafo.checkSolution(solution); // Verifica se a solução é consistente
+        grafo.printGapDetails(solution); // Imprime os detalhes dos gaps
+        break;
+}
         default:
             std::cout << "Escolha inválida.\n";
             break;

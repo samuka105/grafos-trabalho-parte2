@@ -75,6 +75,7 @@ public:
     bool isClusterConnected(const Subgraph& subgraph);
     bool verifyClustersConnectivity(const Solution& solution);
     void checkSolution(const Solution& solution);
+    void printGapDetails(const Solution& solution);
     
 private:
     size_t k; // Número de clusters

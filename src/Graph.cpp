@@ -395,6 +395,15 @@ void Graph::checkSolution(const Solution& solution) {
     }
 }
 
+void Graph::printGapDetails(const Solution& solution) {
+    std::cout << "Detalhes dos Gaps:" << std::endl;
+    for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
+        std::cout << "Cluster " << (i + 1) << " - Gap: " << solution.subgraphs[i].gap << std::endl;
+    }
+    std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+}
+
+
 
 
 

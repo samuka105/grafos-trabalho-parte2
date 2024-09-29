@@ -1,11 +1,15 @@
 #include "../include/Graph.hpp"
 
+
 // --------- Construtor e Funções de Configuração do Grafo ---------
+
+
 Graph::Graph(const std::string& filename) {
     readInstance(filename);
     this->num_vertices = nodes.size(); 
     this->num_subgraphs = k; 
 }
+
 
 bool Graph::readInstance(const std::string& filename) {
     std::ifstream file(filename);
@@ -85,11 +89,13 @@ bool Graph::readInstance(const std::string& filename) {
     return true;
 }
 
+
 void Graph::addNode(size_t id, float weight) {
     if (nodes.find(id) == nodes.end()) {
         nodes[id] = std::make_unique<Node>(id, weight);
     }
 }
+
 
 void Graph::addEdge(size_t from, size_t to) {
     if (nodes.find(from) != nodes.end() && nodes.find(to) != nodes.end()) {
@@ -101,8 +107,9 @@ void Graph::addEdge(size_t from, size_t to) {
 }
 
 
-
 // --------- Funções de Impressão ---------
+
+
 void Graph::printNodes() const {
     if (nodes.empty()) {
         std::cout << "Nenhum nó foi encontrado no grafo." << std::endl;
@@ -113,6 +120,7 @@ void Graph::printNodes() const {
         }
     }
 }
+
 
 void Graph::printEdges() const {
     if (nodes.empty()) {
@@ -137,9 +145,11 @@ void Graph::printEdges() const {
     }
 }
 
+
 void Graph:: printk() const {
     std::cout << "k = " << k << std::endl;
 }
+
 
 void Graph::printClusters(const Solution& solution) const {
     for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
@@ -171,8 +181,8 @@ void Graph::printGapDetails(const Solution& solution) {
 }
 
 
-
 // --------- Algoritmos de Particionamento ---------
+
 
 /**
  * @brief Algoritmo guloso para particionamento de vértices em subgrafos conectados.
@@ -186,6 +196,8 @@ void Graph::printGapDetails(const Solution& solution) {
  *             Com alfa = 0, a escolha dos vértices é completamente aleatória.
  * @return Solution A solução gerada contendo os subgrafos e o gap total.
  */
+
+
 Solution Graph::partitionGreedy(double alfa) {
     // Inicializa a solução com o número correto de subgrafos
     Solution solution(num_subgraphs);  
@@ -270,6 +282,7 @@ Solution Graph::partitionGreedy(double alfa) {
     return solution;
 }
 
+
 /**
  * @brief Algoritmo guloso randomizado adaptativo para particionamento de vértices.
  * 
@@ -303,6 +316,7 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
 
     return best_solution; 
 }
+
 
 /**
  * @brief Algoritmo guloso randomizado adaptativo reativo para particionamento de vértices.
@@ -377,6 +391,7 @@ Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
     return best_solution;
 }
 
+
 /**
  * @brief Obtém a lista de candidatos conectados a um subgrafo a partir dos vértices não atribuídos.
  * 
@@ -407,6 +422,8 @@ std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, co
 
 
 // --------- Funções de Verificação ---------
+
+
 bool Graph::verifyAllNodesInSolution(const Solution& solution) {
     std::unordered_set<size_t> all_nodes_in_subgraphs;
 
@@ -418,6 +435,7 @@ bool Graph::verifyAllNodesInSolution(const Solution& solution) {
 
     return all_nodes_in_subgraphs.size() == nodes.size();
 }
+
 
 bool Graph::isClusterConnected(const Subgraph& subgraph) {
     if (subgraph.vertices.empty()) return true;
@@ -447,6 +465,7 @@ bool Graph::isClusterConnected(const Subgraph& subgraph) {
     return visited.size() == subgraph.vertices.size();
 }
 
+
 bool Graph::verifyClustersConnectivity(const Solution& solution) {
     for (const auto& subgraph : solution.subgraphs) {
         if (!isClusterConnected(subgraph)) {
@@ -455,6 +474,7 @@ bool Graph::verifyClustersConnectivity(const Solution& solution) {
     }
     return true;  
 }
+
 
 void Graph::checkSolution(const Solution& solution) {
     

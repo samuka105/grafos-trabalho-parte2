@@ -9,20 +9,20 @@ class Node {
 public:
     Node(size_t id, float weight);
 
-    size_t getId() const; // Retorna o ID do nó
-    float getWeight() const;// Retorna o peso do nó
-    void setNodeWeight(float weight); // Define o peso do nó
+    size_t getId() const; 
+    float getWeight() const;
+    void setNodeWeight(float weight); 
 
-    void addEdge(size_t to); // Adiciona uma aresta para outro nó
-    const std::unordered_map<size_t, Edge>& getEdges() const;  // Retorna as arestas
+    void addEdge(size_t to); 
+    const std::unordered_map<size_t, Edge>& getEdges() const;  
 
-    bool hasEdge(size_t to) const; // Verifica se uma aresta para o nó `to` existe
-    void removeEdge(size_t to); // Remove uma aresta para o nó `to`
+    bool hasEdge(size_t to) const; 
+    void removeEdge(size_t to); 
 
 private:
-    size_t id; // Identificador do nó
-    float weight; // Peso do nó
-    std::unordered_map<size_t, Edge> edges; // Arestas conectadas ao nó
+    size_t id; 
+    float weight; 
+    std::unordered_map<size_t, Edge> edges; 
 };
 
-#endif // NODE_HPP
+#endif 

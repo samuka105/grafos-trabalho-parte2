@@ -6,7 +6,7 @@
 #include <fstream>
 #include "./include/Graph.hpp"
 
-// Função para exibir o menu de escolha do método
+
 int exibirMenu() {
     int escolha = 0;
     std::cout << "\nEscolha o método:\n";
@@ -19,37 +19,36 @@ int exibirMenu() {
     return escolha;
 }
 
-// Função para salvar resultados em arquivo
-void salvarResultados(const std::string& metodo, const std::string& instancia, const Solution& solution, double tempo) {
-    std::string folder_name = "output" + metodo; // Nome da pasta para o método
-    std::string file_name = folder_name + "/" + instancia + ".txt"; // Nome do arquivo
 
-    // Verifica se a pasta existe, se não, cria
+void salvarResultados(const std::string& metodo, const std::string& instancia, const Solution& solution, double tempo) {
+    std::string folder_name = "output" + metodo; 
+    std::string file_name = folder_name + "/" + instancia + ".txt"; 
+
+    
     std::filesystem::create_directories(folder_name);
 
-    // Inicializa o contador de execuções
+    
     int execucao = 1;
 
-    // Tenta abrir o arquivo para verificar o número de execuções
+    
     std::ifstream infile(file_name);
     if (infile.good()) {
         std::string line;
         while (std::getline(infile, line)) {
-            // Verifica se a linha contém "Execução"
+            
             if (line.find("Execução") != std::string::npos) {
-                // Extraí o número da execução
+                
                 int numero_execucao;
                 std::sscanf(line.c_str(), "Resultados para a instância: %*s - Execução %d", &numero_execucao);
-                execucao = numero_execucao + 1; // Incrementa o número de execuções
+                execucao = numero_execucao + 1; 
             }
         }
-        infile.close(); // Fecha o arquivo de leitura
+        infile.close(); 
     }
 
-    // Abre o arquivo para anexar os resultados
     std::ofstream file(file_name, std::ios::app);
     if (file.is_open()) {
-        file << "Resultados para a instância: " << instancia << " - Execução " << execucao << "\n"; // Adiciona o número da execução
+        file << "Resultados para a instância: " << instancia << " - Execução " << execucao << "\n"; 
         file << "Gap total da solução: " << solution.total_gap << "\n";
         for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
             file << "Cluster " << (i + 1) << " (Vértices: ";
@@ -69,18 +68,19 @@ void salvarResultados(const std::string& metodo, const std::string& instancia, c
     }
 }
 
-// Função para executar o algoritmo e salvar resultados
+
 void executarMetodo(Graph& grafo, int escolha, const std::string& instancia) {
     Solution solution;
 
     switch (escolha) {
         case 1: {
             auto start = std::chrono::high_resolution_clock::now();
-            double alpha = 1.0; 
-            solution = grafo.partitionGreedy(alpha);
-            grafo.printClusters(solution);
+            solution = grafo.partitionGreedy(1.0);
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> duration = end - start;
+            grafo.printClusters(solution);
+            std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+            std::cout << "Tempo de execução: " << duration.count() << " segundos" << std::endl;
             salvarResultados("greedy", instancia, solution, duration.count());
             break;
         }
@@ -101,9 +101,11 @@ void executarMetodo(Graph& grafo, int escolha, const std::string& instancia) {
             std::cin >> iterations;
 
             solution = grafo.partitionGreedyRandomizedAdaptive(alpha, iterations);
-            grafo.printClusters(solution);
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> duration = end - start;
+            grafo.printClusters(solution);
+            std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+            std::cout << "Tempo de execução: " << duration.count() << " segundos" << std::endl;
             salvarResultados("grasp", instancia, solution, duration.count());
             break;
         }
@@ -115,19 +117,21 @@ void executarMetodo(Graph& grafo, int escolha, const std::string& instancia) {
             std::cin >> max_iterations;
 
             solution = grafo.partitionGreedyRandomizedAdaptiveReactive(max_iterations);
-            grafo.printClusters(solution);
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> duration = end - start;
+            grafo.printClusters(solution);
+            std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+            std::cout << "Tempo de execução: " << duration.count() << " segundos" << std::endl;
             salvarResultados("grasp_reactive", instancia, solution, duration.count());
             break;
         }
         default:
             std::cout << "Escolha inválida.\n";
-            return; // Saia se a escolha for inválida
+            return; 
     }
 }
 
-/*
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Erro: Caminho da instância não fornecido." << std::endl;
@@ -137,12 +141,12 @@ int main(int argc, char** argv) {
     Graph grafo(argv[1]);
 
     int escolha = exibirMenu();
-    if (escolha == 0) return 0; // Sai se o usuário escolher 0
+    if (escolha == 0) return 0; 
 
-    // Obtém o nome da instância para o arquivo
+    
     std::string instancia = argv[1];
 
-    // Remove o caminho e a extensão do nome da instância
+    
     size_t last_slash = instancia.find_last_of("/\\");
     if (last_slash != std::string::npos) {
         instancia = instancia.substr(last_slash + 1);
@@ -152,14 +156,13 @@ int main(int argc, char** argv) {
         instancia = instancia.substr(0, dot);
     }
 
-    executarMetodo(grafo, escolha, instancia); // Executa o método escolhido
+    executarMetodo(grafo, escolha, instancia); 
 
     return 0;
 }
-*/
 
 
-/// Função para testar todas as instâncias
+/*
 void testarInstancias() {
     std::string instancias[] = {
         "n100d03p1i2.txt",
@@ -230,8 +233,8 @@ void testarInstancias() {
 }
 
 
-// main para teste all
 int main() {
     testarInstancias();
     return 0;
 }
+*/

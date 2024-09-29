@@ -296,6 +296,8 @@ Solution Graph::partitionGreedy(double alfa) {
  * @param iterations Número de iterações a serem realizadas.
  * @return Solution A melhor solução encontrada após as iterações.
  */
+
+
 Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
     Solution best_solution(num_subgraphs);  // Inicializa a melhor solução
     double best_gap = std::numeric_limits<double>::max();  // Inicializa o melhor gap com valor máximo

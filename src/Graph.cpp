@@ -173,40 +173,55 @@ void Graph::printGapDetails(const Solution& solution) {
 
 
 // --------- Algoritmos de Particionamento ---------
+
+/**
+ * @brief Algoritmo guloso para particionamento de vértices em subgrafos conectados.
+ * 
+ * O algoritmo distribui os vértices do grafo em `k` subgrafos de forma gulosa. 
+ * Cada subgrafo inicialmente recebe um vértice, e os demais vértices são distribuídos
+ * conforme critérios de peso e conectividade. O objetivo é minimizar o gap entre o 
+ * maior e menor peso em cada subgrafo.
+ * 
+ * @param alfa Parâmetro de controle da aleatoriedade. Com alfa = 1, o algoritmo é puramente guloso. 
+ *             Com alfa = 0, a escolha dos vértices é completamente aleatória.
+ * @return Solution A solução gerada contendo os subgrafos e o gap total.
+ */
 Solution Graph::partitionGreedy(double alfa) {
+    // Inicializa a solução com o número correto de subgrafos
     Solution solution(num_subgraphs);  
     solution.total_gap = 0.0;
 
+    // Lista de vértices não atribuídos
     std::vector<size_t> unassigned_vertices;
     for (const auto& node_pair : nodes) {
-        unassigned_vertices.push_back(node_pair.first);  
+        unassigned_vertices.push_back(node_pair.first);  // Insere o ID de cada vértice
     }
 
-    
+    // Atribui um vértice inicial a cada subgrafo
     for (size_t subgraph_idx = 0; subgraph_idx < num_subgraphs; ++subgraph_idx) {
         size_t initial_vertex = unassigned_vertices.back();
-        unassigned_vertices.pop_back();  
+        unassigned_vertices.pop_back();  // Remove o vértice dos não atribuídos
         
-        
+        // Adiciona o vértice ao subgrafo
         solution.subgraphs[subgraph_idx].vertices.push_back(initial_vertex);
         
-        
+        // Inicializa os pesos máximo e mínimo com o peso do vértice inicial
         float initial_weight = nodes[initial_vertex]->getWeight();
         solution.subgraphs[subgraph_idx].max_weight = initial_weight;
         solution.subgraphs[subgraph_idx].min_weight = initial_weight;
         solution.subgraphs[subgraph_idx].gap = 0.0;
-
     }
 
-    
+    // Alterna entre os subgrafos para distribuir os vértices restantes
     size_t current_subgraph_idx = 0;
     while (!unassigned_vertices.empty()) {
-        
+        // Subgrafo atual
         Subgraph& current_subgraph = solution.subgraphs[current_subgraph_idx];
 
-        
+        // Lista de candidatos conectados ao subgrafo atual
         std::vector<size_t> candidate_list = getCandidates(current_subgraph.vertices, unassigned_vertices);
 
+        // Se não houver candidatos, pule para o próximo subgrafo
         if (candidate_list.empty()) {
             if (current_subgraph.vertices.size() < 2) {
                 std::cerr << "Erro: Subgrafo com menos de 2 vértices.\n";
@@ -215,34 +230,40 @@ Solution Graph::partitionGreedy(double alfa) {
             continue;
         }
 
-        
+        // Ordena os candidatos pelo peso do vértice (vértices com pesos menores são preferidos)
         std::sort(candidate_list.begin(), candidate_list.end(), [&](size_t a, size_t b) {
             return nodes[a]->getWeight() < nodes[b]->getWeight();
         });
 
-        
+        // Cria a RCL (Restricted Candidate List) com base em alfa
         size_t rcl_size = std::max(static_cast<size_t>(alfa * candidate_list.size()), static_cast<size_t>(1));
         std::vector<size_t> rcl(candidate_list.begin(), candidate_list.begin() + rcl_size);
 
-        
+        // Escolhe aleatoriamente um vértice da RCL
         size_t chosen_vertex = rcl[rand() % rcl.size()];
 
-        
+        // Armazena o gap anterior para ajustar o gap total
         float previous_gap = current_subgraph.gap;
 
-        
+        // Adiciona o vértice ao subgrafo
         current_subgraph.vertices.push_back(chosen_vertex);
         unassigned_vertices.erase(std::remove(unassigned_vertices.begin(), unassigned_vertices.end(), chosen_vertex), unassigned_vertices.end());
 
-        
+        // Verifica se o subgrafo ainda é conexo
+        if (!isClusterConnected(current_subgraph)) {
+            std::cerr << "Erro: O subgrafo deixou de ser conexo após adicionar o vértice " << chosen_vertex << std::endl;
+        }
+
+        // Atualiza o peso máximo, mínimo e o gap do subgrafo
         float vertex_weight = nodes[chosen_vertex]->getWeight();
         current_subgraph.max_weight = std::max(current_subgraph.max_weight, vertex_weight);
         current_subgraph.min_weight = std::min(current_subgraph.min_weight, vertex_weight);
         current_subgraph.gap = current_subgraph.max_weight - current_subgraph.min_weight;
 
-        
+        // Ajusta o gap total da solução com base na mudança do gap do subgrafo
         solution.total_gap += (current_subgraph.gap - previous_gap);
 
+        // Alterna para o próximo subgrafo
         current_subgraph_idx = (current_subgraph_idx + 1) % num_subgraphs;
     }
 

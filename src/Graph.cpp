@@ -1,6 +1,6 @@
 #include "../include/Graph.hpp"
 
-
+// --------- Construtor e Funções de Configuração do Grafo ---------
 Graph::Graph(const std::string& filename) {
     readInstance(filename);
     this->num_vertices = nodes.size(); 
@@ -85,8 +85,6 @@ bool Graph::readInstance(const std::string& filename) {
     return true;
 }
 
-
-
 void Graph::addNode(size_t id, float weight) {
     if (nodes.find(id) == nodes.end()) {
         nodes[id] = std::make_unique<Node>(id, weight);
@@ -104,6 +102,7 @@ void Graph::addEdge(size_t from, size_t to) {
 
 
 
+// --------- Funções de Impressão ---------
 void Graph::printNodes() const {
     if (nodes.empty()) {
         std::cout << "Nenhum nó foi encontrado no grafo." << std::endl;
@@ -173,6 +172,7 @@ void Graph::printGapDetails(const Solution& solution) {
 
 
 
+// --------- Algoritmos de Particionamento ---------
 Solution Graph::partitionGreedy(double alfa) {
     Solution solution(num_subgraphs);  
     solution.total_gap = 0.0;
@@ -332,7 +332,6 @@ std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, co
     return candidates;
 }
 
-
 double Graph::calculateTotalCost(const Solution& solution) {
     double total_gap = 0.0;
 
@@ -345,8 +344,7 @@ double Graph::calculateTotalCost(const Solution& solution) {
 
 
 
-
-//verificação
+// --------- Funções de Verificação ---------
 bool Graph::verifyAllNodesInSolution(const Solution& solution) {
     std::unordered_set<size_t> all_nodes_in_subgraphs;
 

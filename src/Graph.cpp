@@ -328,6 +328,8 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
  * @param iterations Número de iterações do algoritmo.
  * @return Solution A melhor solução encontrada após as iterações.
  */
+
+
 Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
     // Lista de valores possíveis de alfa
     std::vector<double> alphas = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};  

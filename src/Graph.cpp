@@ -270,38 +270,72 @@ Solution Graph::partitionGreedy(double alfa) {
     return solution;
 }
 
+/**
+ * @brief Algoritmo guloso randomizado adaptativo para particionamento de vértices.
+ * 
+ * Este algoritmo utiliza uma abordagem gulosa com adição de randomização controlada
+ * pelo parâmetro alfa. A cada iteração, uma nova solução é gerada utilizando o valor
+ * de alfa fornecido, que controla o nível de aleatoriedade nas escolhas dos vértices. 
+ * O objetivo é encontrar a melhor solução após várias iterações.
+ * 
+ * @param alfa Valor de controle da aleatoriedade. Alfa = 1 corresponde ao algoritmo guloso puro,
+ *             enquanto alfa = 0 representa escolhas completamente aleatórias.
+ * @param iterations Número de iterações a serem realizadas.
+ * @return Solution A melhor solução encontrada após as iterações.
+ */
 Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
-    Solution best_solution(num_subgraphs);  
-    double best_gap = std::numeric_limits<double>::max(); 
-    Solution current_solution = partitionGreedy(1);
+    Solution best_solution(num_subgraphs);  // Inicializa a melhor solução
+    double best_gap = std::numeric_limits<double>::max();  // Inicializa o melhor gap com valor máximo
+    Solution current_solution = partitionGreedy(1);  // Executa o algoritmo guloso puro inicialmente
 
+    // Loop para executar o algoritmo em várias iterações
     for (int i = 0; i < iterations; ++i) {
         
+        // Gera uma nova solução com o valor de alfa fornecido
         current_solution = partitionGreedy(alfa);
 
+        // Verifica se a nova solução é melhor que a melhor solução encontrada até o momento
         if (current_solution.total_gap < best_gap) {
             best_gap = current_solution.total_gap;
-            best_solution = current_solution; 
+            best_solution = current_solution;  // Atualiza a melhor solução
         }
     }
 
-    return best_solution;
+    return best_solution; 
 }
 
+/**
+ * @brief Algoritmo guloso randomizado adaptativo reativo para particionamento de vértices.
+ * 
+ * O algoritmo utiliza uma estratégia reativa, adaptando as probabilidades de escolha de diferentes valores de alfa
+ * com base na performance das soluções encontradas em iterações anteriores. A cada iteração, um valor de alfa é escolhido
+ * de forma probabilística, com base nos scores acumulados, que refletem a qualidade das soluções obtidas com cada alfa.
+ * 
+ * @param iterations Número de iterações do algoritmo.
+ * @return Solution A melhor solução encontrada após as iterações.
+ */
 Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
+    // Lista de valores possíveis de alfa
     std::vector<double> alphas = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};  
+    
+    // Inicializa as probabilidades uniformemente
     std::vector<double> probabilities(alphas.size(), 1.0 / alphas.size());  
+    
+    // Inicializa os scores de cada valor de alfa como zero
     std::vector<double> scores(alphas.size(), 0.0);  
 
+    // Inicializa a solução corrente e a melhor solução com o algoritmo guloso puro
     Solution current_solution = partitionGreedy(1);
     Solution best_solution(num_subgraphs);  
-    double best_gap = std::numeric_limits<double>::max(); 
+    double best_gap = std::numeric_limits<double>::max();  // Inicializa o melhor gap com um valor máximo
 
     for (int i = 0; i < iterations; ++i) {
+        // Gera um valor aleatório para selecionar o alfa com base nas probabilidades
         double random_value = (double)rand() / RAND_MAX;
         double cumulative_prob = 0.0;
         size_t chosen_alpha_idx = 0;
 
+        // Seleciona o índice de alfa acumulando as probabilidades
         for (size_t j = 0; j < probabilities.size(); ++j) {
             cumulative_prob += probabilities[j];
             if (random_value <= cumulative_prob) {
@@ -310,59 +344,66 @@ Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
             }
         }
 
+        // Obtém o valor de alfa escolhido
         double chosen_alpha = alphas[chosen_alpha_idx];
+        
+        // Executa o algoritmo guloso com o alfa escolhido
         current_solution = partitionGreedy(chosen_alpha);
 
-       
+        // Verifica se a solução atual é melhor que a melhor solução encontrada até agora
         if (current_solution.total_gap < best_gap) {
             best_gap = current_solution.total_gap;
             best_solution = current_solution;  
         }
 
-        
+        // Atualiza o score do alfa escolhido com base na melhoria de gap
         scores[chosen_alpha_idx] += (best_gap - current_solution.total_gap);  
 
-        
+        // Atualiza as probabilidades com base nos scores acumulados
         double total_score = std::accumulate(scores.begin(), scores.end(), 0.0);
         if (total_score > 0) {
             for (size_t j = 0; j < probabilities.size(); ++j) {
-                probabilities[j] = scores[j] / total_score;  
+                probabilities[j] = scores[j] / total_score;  // Normaliza as probabilidades
             }
         } else {
+            // Se todos os scores forem zero, mantém probabilidades uniformes
             std::fill(probabilities.begin(), probabilities.end(), 1.0 / probabilities.size());
         }
 
-        //std::cout << "Iteração " << i + 1 << " - Alfa escolhido: " << chosen_alpha << " - Gap da solução: " << current_solution.total_gap << std::endl;
+        // Comentário para visualizar o progresso das iterações 
+        // std::cout << "Iteração " << i + 1 << " - Alfa escolhido: " << chosen_alpha << " - Gap da solução: " << current_solution.total_gap << std::endl;
     }
 
     return best_solution;
 }
 
+/**
+ * @brief Obtém a lista de candidatos conectados a um subgrafo a partir dos vértices não atribuídos.
+ * 
+ * Esta função verifica, para cada vértice no subgrafo atual, quais vértices não atribuídos estão 
+ * conectados a ele através de uma aresta. A lista de candidatos consiste nesses vértices conectados,
+ * sendo que cada vértice não atribuído é considerado apenas uma vez.
+ * 
+ * @param subgraph Vetor de IDs dos vértices que compõem o subgrafo atual.
+ * @param unassigned_vertices Vetor de IDs dos vértices que ainda não foram atribuídos a nenhum subgrafo.
+ * @return std::vector<size_t> A lista de candidatos conectados ao subgrafo.
+ */
 std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices) {
     std::vector<size_t> candidates;
-    
+
+    // Para cada vértice no subgrafo atual
     for (size_t u : subgraph) {
+        // Verifica se existe conexão entre o vértice u do subgrafo e algum vértice não atribuído
         for (size_t v : unassigned_vertices) {
-            if (nodes[u]->hasEdge(v)) {
-                candidates.push_back(v);
-                break; 
+            if (nodes[u]->hasEdge(v)) {  // Se u está conectado a v
+                candidates.push_back(v);  // Adiciona v à lista de candidatos
+                break;  // Após encontrar uma conexão para u, interrompe o loop interno
             }
         }
     }
 
-    return candidates;
+    return candidates;  // Retorna a lista de candidatos conectados
 }
-
-double Graph::calculateTotalCost(const Solution& solution) {
-    double total_gap = 0.0;
-
-    for (const auto& subgraph : solution.subgraphs) {
-        total_gap += subgraph.gap;  
-    }
-
-    return total_gap;
-}
-
 
 
 // --------- Funções de Verificação ---------

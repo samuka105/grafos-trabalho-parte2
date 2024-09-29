@@ -100,9 +100,6 @@ public:
     // Gera a lista de candidatos (vértices conectados) para um subgrafo atual
     std::vector<size_t> getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices);
 
-    // Calcula o custo total (gap total) de uma solução
-    double calculateTotalCost(const Solution& solution);
-
     // --------- Funções de Verificação ---------
 
     // Verifica se todos os nós do grafo estão presentes na solução

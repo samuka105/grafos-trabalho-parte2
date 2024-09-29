@@ -2,10 +2,20 @@
 #define GRAFO_HPP
 
 #include "Node.hpp"
+
+#include <iostream>
 #include <unordered_map>
+#include <unordered_set>
+#include <cstddef>
 #include <memory>
 #include <limits>
 #include <vector>
+#include <stack>
+#include <algorithm>
+#include <random>
+#include <fstream>
+#include <sstream>
+
 
 
 struct Candidate {
@@ -56,20 +66,21 @@ public:
     void printEdges() const;  
     void printk() const;
     void printClusters(const Solution& solution) const;
+    void printGapDetails(const Solution& solution);
     
     Solution partitionGreedy(double alfa); 
     Solution partitionGreedyRandomizedAdaptive(double alfa, int iterations);
     Solution partitionGreedyRandomizedAdaptiveReactive(int iterations);
 
-    double calculateTotalCost(const Solution& solution);
-    double calculateGap(const Subgraph& subgraph) const;
     std::vector<size_t>getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices);
 
+    double calculateTotalCost(const Solution& solution);
+    
     bool verifyAllNodesInSolution(const Solution& solution);
     bool isClusterConnected(const Subgraph& subgraph);
     bool verifyClustersConnectivity(const Solution& solution);
     void checkSolution(const Solution& solution);
-    void printGapDetails(const Solution& solution);
+    
     
 private:
     size_t k; 

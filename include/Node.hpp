@@ -1,9 +1,12 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
+#include "Edge.hpp"
+
 #include <cstddef>
 #include <unordered_map>
-#include "Edge.hpp"
+#include <iostream>
+
 
 class Node {
 public:

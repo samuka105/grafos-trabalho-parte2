@@ -1,5 +1,4 @@
 #include "../include/Node.hpp"
-#include <iostream>
 
 Node::Node(size_t id, float weight) : id(id), weight(weight) {}
 

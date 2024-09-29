@@ -1,10 +1,12 @@
+#include "./include/Graph.hpp"
+
 #include <iostream>
 #include <string>
 #include <cstdlib>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include "./include/Graph.hpp"
+
 
 
 int exibirMenu() {

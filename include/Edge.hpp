@@ -8,12 +8,12 @@ public:
     Edge();
     Edge(size_t from, size_t to);
 
-    size_t getFrom() const;  // Retorna o nó de origem
-    size_t getTo() const;    // Retorna o nó de destino
+    size_t getFrom() const;  
+    size_t getTo() const;    
 
 private:
-    size_t from;  // Nó de origem
-    size_t to;    // Nó de destino
+    size_t from;  
+    size_t to;    
 };
 
-#endif // EDGE_HPP
+#endif 

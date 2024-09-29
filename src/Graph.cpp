@@ -1,18 +1,4 @@
 #include "../include/Graph.hpp"
-#include <random>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <cstddef>
-#include <unordered_map>
-#include <unordered_set>
-#include <algorithm>
-#include <vector>
-#include <cmath>
-#include <queue>
-#include <stack>
-#include <limits>
-
 
 
 Graph::Graph(const std::string& filename) {
@@ -116,6 +102,8 @@ void Graph::addEdge(size_t from, size_t to) {
     }
 }
 
+
+
 void Graph::printNodes() const {
     if (nodes.empty()) {
         std::cout << "Nenhum nó foi encontrado no grafo." << std::endl;
@@ -150,10 +138,40 @@ void Graph::printEdges() const {
     }
 }
 
-
 void Graph:: printk() const {
     std::cout << "k = " << k << std::endl;
 }
+
+void Graph::printClusters(const Solution& solution) const {
+    for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
+        const Subgraph& subgraph = solution.subgraphs[i];  
+
+        
+        std::ostringstream vertices;
+        vertices << "Cluster " << (i + 1) << " (Vértices: ";  
+
+        for (size_t j = 0; j < subgraph.vertices.size(); ++j) {
+            vertices << subgraph.vertices[j];
+            if (j < subgraph.vertices.size() - 1) {
+                vertices << " ";  
+            }
+        }
+
+        vertices << ") - Gap: " << subgraph.gap; 
+
+        std::cout << vertices.str() << std::endl;
+    }
+}
+
+void Graph::printGapDetails(const Solution& solution) {
+    std::cout << "Detalhes dos Gaps:" << std::endl;
+    for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
+        std::cout << "Cluster " << (i + 1) << " - Gap: " << solution.subgraphs[i].gap << std::endl;
+    }
+    std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
+}
+
+
 
 Solution Graph::partitionGreedy(double alfa) {
     Solution solution(num_subgraphs);  
@@ -231,9 +249,6 @@ Solution Graph::partitionGreedy(double alfa) {
     return solution;
 }
 
-
-
-
 Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
     Solution best_solution(num_subgraphs);  
     double best_gap = std::numeric_limits<double>::max(); 
@@ -251,7 +266,6 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
 
     return best_solution;
 }
-
 
 Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
     std::vector<double> alphas = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};  
@@ -303,41 +317,6 @@ Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
     return best_solution;
 }
 
-
-
-double Graph::calculateTotalCost(const Solution& solution) {
-    double total_gap = 0.0;
-
-    for (const auto& subgraph : solution.subgraphs) {
-        total_gap += subgraph.gap;  
-    }
-
-    return total_gap;
-}
-
-
-
-void Graph::printClusters(const Solution& solution) const {
-    for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
-        const Subgraph& subgraph = solution.subgraphs[i];  
-
-        
-        std::ostringstream vertices;
-        vertices << "Cluster " << (i + 1) << " (Vértices: ";  
-
-        for (size_t j = 0; j < subgraph.vertices.size(); ++j) {
-            vertices << subgraph.vertices[j];
-            if (j < subgraph.vertices.size() - 1) {
-                vertices << " ";  
-            }
-        }
-
-        vertices << ") - Gap: " << subgraph.gap; 
-
-        std::cout << vertices.str() << std::endl;
-    }
-}
-
 std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, const std::vector<size_t>& unassigned_vertices) {
     std::vector<size_t> candidates;
     
@@ -354,6 +333,19 @@ std::vector<size_t> Graph::getCandidates(const std::vector<size_t>& subgraph, co
 }
 
 
+double Graph::calculateTotalCost(const Solution& solution) {
+    double total_gap = 0.0;
+
+    for (const auto& subgraph : solution.subgraphs) {
+        total_gap += subgraph.gap;  
+    }
+
+    return total_gap;
+}
+
+
+
+
 //verificação
 bool Graph::verifyAllNodesInSolution(const Solution& solution) {
     std::unordered_set<size_t> all_nodes_in_subgraphs;
@@ -366,8 +358,6 @@ bool Graph::verifyAllNodesInSolution(const Solution& solution) {
 
     return all_nodes_in_subgraphs.size() == nodes.size();
 }
-
-
 
 bool Graph::isClusterConnected(const Subgraph& subgraph) {
     if (subgraph.vertices.empty()) return true;
@@ -397,8 +387,6 @@ bool Graph::isClusterConnected(const Subgraph& subgraph) {
     return visited.size() == subgraph.vertices.size();
 }
 
-
-
 bool Graph::verifyClustersConnectivity(const Solution& solution) {
     for (const auto& subgraph : solution.subgraphs) {
         if (!isClusterConnected(subgraph)) {
@@ -407,7 +395,6 @@ bool Graph::verifyClustersConnectivity(const Solution& solution) {
     }
     return true;  
 }
-
 
 void Graph::checkSolution(const Solution& solution) {
     
@@ -424,13 +411,7 @@ void Graph::checkSolution(const Solution& solution) {
     }
 }
 
-void Graph::printGapDetails(const Solution& solution) {
-    std::cout << "Detalhes dos Gaps:" << std::endl;
-    for (size_t i = 0; i < solution.subgraphs.size(); ++i) {
-        std::cout << "Cluster " << (i + 1) << " - Gap: " << solution.subgraphs[i].gap << std::endl;
-    }
-    std::cout << "Gap total da solução: " << solution.total_gap << std::endl;
-}
+
 
 
 

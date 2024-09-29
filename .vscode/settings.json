@@ -51,6 +51,9 @@
         "map": "cpp",
         "ratio": "cpp",
         "string_view": "cpp",
-        "numbers": "cpp"
+        "numbers": "cpp",
+        "codecvt": "cpp",
+        "list": "cpp",
+        "iomanip": "cpp"
     }
 }

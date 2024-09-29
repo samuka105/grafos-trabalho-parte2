@@ -127,6 +127,7 @@ void executarMetodo(Graph& grafo, int escolha, const std::string& instancia) {
     }
 }
 
+/*
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Erro: Caminho da instância não fornecido." << std::endl;
@@ -153,5 +154,84 @@ int main(int argc, char** argv) {
 
     executarMetodo(grafo, escolha, instancia); // Executa o método escolhido
 
+    return 0;
+}
+*/
+
+
+/// Função para testar todas as instâncias
+void testarInstancias() {
+    std::string instancias[] = {
+        "n100d03p1i2.txt",
+        "n100d03p2i2.txt",
+        "n100d03p3i2.txt",
+        "n100d06p1i3.txt",
+        "n100d06p2i3.txt",
+        "n100d06p3i3.txt",
+        "n100plap1i1.txt",
+        "n100plap2i1.txt",
+        "n100plap3i1.txt",
+        "n200d03p1i5.txt",
+        "n200d03p2i5.txt",
+        "n200d03p3i5.txt",
+        "n200plap1i4.txt",
+        "n200plap2i4.txt",
+        "n200plap3i4.txt",
+        "n300d06p2i2.txt",
+        "n300plap1i1.txt",
+        "n300plap2i4.txt",
+        "n300plap3i5.txt"
+    };
+
+    double alpha;
+    std::cout << "Digite o valor de alpha (0 a 1) para o método Guloso Randomizado Adaptativo: ";
+    std::cin >> alpha;
+
+    while (alpha < 0.0 || alpha > 1.0) {
+        std::cout << "Valor inválido. Digite o valor de alpha (0 a 1): ";
+        std::cin >> alpha;
+    }
+
+    for (const auto& instancia : instancias) {
+        std::string caminho = "./instances/" + instancia; // Ajuste o caminho do arquivo
+        std::cout << "Testando instância: " << caminho << std::endl;
+
+        // Tente abrir o arquivo
+        std::ifstream infile(caminho);
+        if (!infile) {
+            std::cerr << "Erro ao abrir o arquivo: " << caminho << std::endl;
+            continue; // Passe para a próxima instância se houver erro
+        }
+
+        // Cria o grafo para cada instância
+        Graph grafo(caminho);
+
+        // Método 1: Guloso
+        auto start = std::chrono::high_resolution_clock::now();
+        Solution solution1 = grafo.partitionGreedy(1.0);
+        auto end1 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration1 = end1 - start;
+        salvarResultados("greedy", instancia, solution1, duration1.count());
+
+        // Método 2: Guloso Randomizado Adaptativo
+        auto start2 = std::chrono::high_resolution_clock::now();
+        Solution solution2 = grafo.partitionGreedyRandomizedAdaptive(alpha, 20);
+        auto end2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration2 = end2 - start2;
+        salvarResultados("grasp", instancia, solution2, duration2.count());
+
+        // Método 3: Guloso Randomizado Adaptativo Reativo
+        auto start3 = std::chrono::high_resolution_clock::now();
+        Solution solution3 = grafo.partitionGreedyRandomizedAdaptiveReactive(20);
+        auto end3 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration3 = end3 - start3;
+        salvarResultados("grasp_reactive", instancia, solution3, duration3.count());
+    }
+}
+
+
+// main para teste all
+int main() {
+    testarInstancias();
     return 0;
 }

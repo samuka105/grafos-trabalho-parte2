@@ -31,6 +31,16 @@ Após compilar, você pode executar o programa com o seguinte comando:
 ```bash
 ./meu_programa ./instances/n100d03p1i2.txt
 ```
+Para executar o teste em todos os arquivos:
+1) Utilizar a segunda main criada em baixo de testarInstancias(). A primeira main devem estar em um comentario bloco.
+2) Executar comando
+```bash
+g++ main.cpp src/Node.cpp src/Edge.cpp src/Graph.cpp -Iinclude -o meu_programa
+```
+Após compilar, você pode executar o programa com o seguinte comando:
+```bash
+./meu_programa
+```
 ### Debug tip
 Para compilar o código, utilize o seguinte comando:
 ```bash

@@ -30,11 +30,11 @@ Após compilar, você pode executar o programa com o seguinte comando:
 ### Debug tip
 Para compilar o código, utilize o seguinte comando:
 ```bash
-g++ -g main.cpp src/Node.cpp src/Edge.cpp src/Graph.cpp -Iinclude -o meu_programa
+g++ -g main.cpp src/Node.cpp src/Edge.cpp src/Graph.cpp -Iinclude -o execGrupoX
 ```
 Utilize o gdb para executar
 ```bash
-gdb ./meu_programa
+gdb ./execGrupoX
 set args ./instances/(coloque o nome da instancia aqui)
 run
 backtrace

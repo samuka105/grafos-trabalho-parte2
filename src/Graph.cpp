@@ -301,7 +301,7 @@ Solution Graph::partitionGreedy(double alfa) {
 Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
     Solution best_solution(num_subgraphs);  // Inicializa a melhor solução
     double best_gap = std::numeric_limits<double>::max();  // Inicializa o melhor gap com valor máximo
-    Solution current_solution = partitionGreedy(1);  // Executa o algoritmo guloso puro inicialmente
+    Solution current_solution;  // Executa o algoritmo guloso puro inicialmente
 
     // Loop para executar o algoritmo em várias iterações
     for (int i = 0; i < iterations; ++i) {
@@ -316,7 +316,8 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
         }
     }
 
-    return best_solution; 
+    current_solution = partitionGreedy(1.0);
+    return (best_solution.total_gap < current_solution.total_gap) ? best_solution : current_solution; 
 }
 
 
@@ -343,7 +344,7 @@ Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
     std::vector<double> scores(alphas.size(), 0.0);  
 
     // Inicializa a solução corrente e a melhor solução com o algoritmo guloso puro
-    Solution current_solution = partitionGreedy(1);
+    Solution current_solution;
     Solution best_solution(num_subgraphs);  
     double best_gap = std::numeric_limits<double>::max();  // Inicializa o melhor gap com um valor máximo
 
@@ -392,7 +393,8 @@ Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
         // std::cout << "Iteração " << i + 1 << " - Alfa escolhido: " << chosen_alpha << " - Gap da solução: " << current_solution.total_gap << std::endl;
     }
 
-    return best_solution;
+    current_solution = partitionGreedy(1.0);
+    return (best_solution.total_gap < current_solution.total_gap) ? best_solution : current_solution;
 }
 
 

@@ -335,7 +335,7 @@ Solution Graph::partitionGreedyRandomizedAdaptive(double alfa, int iterations) {
 
 Solution Graph::partitionGreedyRandomizedAdaptiveReactive(int iterations) {
     // Lista de valores possíveis de alfa
-    std::vector<double> alphas = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};  
+    std::vector<double> alphas = {0.0, 0.25, 0.5, 0.75, 1.0};  
     
     // Inicializa as probabilidades uniformemente
     std::vector<double> probabilities(alphas.size(), 1.0 / alphas.size());  
